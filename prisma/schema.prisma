@@ -1,0 +1,152 @@
+// Project tracking - Prisma Schema
+// Database: SQLite (Turso/libSQL)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  username      String   @unique
+  passwordHash  String   @map("password_hash")
+  name          String
+  role          String   // super_admin, manager, sales_admin, drafter, purchasing, cnc_operator, milling_operator, fab_operator, qc, delivery, finance
+  department    String
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Relations
+  createdPurchaseOrders PurchaseOrder[] @relation("CreatedBy")
+  updatedTracks         ItemTrack[]     @relation("UpdatedBy")
+  activityLogs          ActivityLog[]   @relation("Actor")
+  deliveries            Delivery[]      @relation("DeliveredBy")
+
+  @@map("users")
+}
+
+model Client {
+  id            String   @id @default(uuid())
+  code          String   @unique
+  name          String
+  contactPerson String?  @map("contact_person")
+  phone         String?
+  address       String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Relations
+  purchaseOrders PurchaseOrder[]
+
+  @@map("clients")
+}
+
+model PurchaseOrder {
+  id               String   @id @default(uuid())
+  poNumber         String   @unique @map("po_number")
+  clientPoNumber   String?  @map("client_po_number")
+  clientId         String   @map("client_id")
+  poDate           DateTime @map("po_date")
+  deliveryDeadline DateTime? @map("delivery_deadline")
+  notes            String?
+  status           String   @default("active") // active, completed, cancelled
+  isUrgent         Boolean  @default(false) @map("is_urgent")
+  createdBy        String   @map("created_by")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  // Relations
+  client Client @relation(fields: [clientId], references: [id])
+  creator User @relation("CreatedBy", fields: [createdBy], references: [id])
+  items Item[]
+
+  @@map("purchase_orders")
+}
+
+model Item {
+  id                String   @id @default(uuid())
+  poId              String   @map("po_id")
+  itemName          String   @map("item_name")
+  specification     String?
+  quantityTotal     Int      @map("quantity_total")
+  quantityUnit      String   @default("pcs") @map("quantity_unit")
+  quantityDelivered Int      @default(0) @map("quantity_delivered")
+  isDelivered       Boolean  @default(false) @map("is_delivered")
+  deliveredAt       DateTime? @map("delivered_at")
+  productionType    String   @default("both") @map("production_type") // machining, fabrication, both
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  purchaseOrder PurchaseOrder @relation(fields: [poId], references: [id], onDelete: Cascade)
+  tracks ItemTrack[]
+  activityLogs ActivityLog[]
+  deliveries Delivery[]
+
+  @@index([poId], name: "idx_items_po")
+  @@map("items")
+}
+
+model ItemTrack {
+  id        String   @id @default(uuid())
+  itemId    String   @map("item_id")
+  department String  // drafting, purchasing, production, qc
+  progress  Int      @default(0)
+  updatedBy String?  @map("updated_by")
+  updatedAt DateTime? @map("updated_at")
+  lastNote  String?  @map("last_note")
+
+  // Relations
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  updater User? @relation("UpdatedBy", fields: [updatedBy], references: [id])
+  activityLogs ActivityLog[]
+
+  @@unique([itemId, department])
+  @@index([itemId], name: "idx_tracks_item")
+  @@index([department], name: "idx_tracks_dept")
+  @@map("item_tracks")
+}
+
+model ActivityLog {
+  id             String   @id @default(uuid())
+  itemId         String   @map("item_id")
+  trackId        String?  @map("track_id")
+  actorId        String   @map("actor_id")
+  actorName      String   @map("actor_name")
+  actorRole      String   @map("actor_role")
+  department     String
+  actionType     String   @default("progress_update") @map("action_type")
+  oldProgress    Int?     @map("old_progress")
+  newProgress    Int?     @map("new_progress")
+  delta          Int?
+  systemMessage  String   @map("system_message")
+  userNote       String?  @map("user_note")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  // Relations
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  track ItemTrack? @relation(fields: [trackId], references: [id])
+  actor User @relation("Actor", fields: [actorId], references: [id])
+
+  @@index([itemId], name: "idx_logs_item")
+  @@index([createdAt], name: "idx_logs_created")
+  @@map("activity_logs")
+}
+
+model Delivery {
+  id               String   @id @default(uuid())
+  itemId           String   @map("item_id")
+  quantity         Int
+  deliveryDate     DateTime @map("delivery_date")
+  suratJalanNumber String?  @map("surat_jalan_number")
+  notes            String?
+  deliveredBy      String   @map("delivered_by")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  // Relations
+  item Item @relation(fields: [itemId], references: [id])
+  deliverer User @relation("DeliveredBy", fields: [deliveredBy], references: [id])
+
+  @@map("deliveries")
+}
