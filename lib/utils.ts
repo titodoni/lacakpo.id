@@ -58,7 +58,7 @@ export function generateSystemMessage(
 
 // Role to allowed departments mapping
 // Only department-specific users can update progress
-// super_admin, manager, sales_admin, delivery, finance = view only (no track updates)
+// super_admin, manager, sales_admin, finance = view only (no track updates)
 export const roleTrackMap: Record<string, string[]> = {
   super_admin: [],
   manager: [],
@@ -69,10 +69,51 @@ export const roleTrackMap: Record<string, string[]> = {
   milling_operator: ['production'],
   fab_operator: ['production'],
   qc: ['qc'],
-  delivery: [],
+  delivery: ['delivery'],
   finance: [],
 };
 
 export function canUpdateTrack(userRole: string, trackDepartment: string): boolean {
   return roleTrackMap[userRole]?.includes(trackDepartment) ?? false;
+}
+
+// Format distance to now (e.g., "2 hours ago")
+export function formatDistanceToNow(date: Date | string): string {
+  const now = new Date();
+  const past = new Date(date);
+  const diffMs = now.getTime() - past.getTime();
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+  const diffWeeks = Math.floor(diffDays / 7);
+  const diffMonths = Math.floor(diffDays / 30);
+  const diffYears = Math.floor(diffDays / 365);
+
+  if (diffSecs < 60) return 'baru saja';
+  if (diffMins < 60) return `${diffMins} menit yang lalu`;
+  if (diffHours < 24) return `${diffHours} jam yang lalu`;
+  if (diffDays < 7) return `${diffDays} hari yang lalu`;
+  if (diffWeeks < 4) return `${diffWeeks} minggu yang lalu`;
+  if (diffMonths < 12) return `${diffMonths} bulan yang lalu`;
+  return `${diffYears} tahun yang lalu`;
+}
+
+// Format month and year for display (e.g., "January 2026")
+export function formatMonthYear(date: Date | string): string {
+  return new Date(date).toLocaleDateString('en-US', {
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
+// Get department label for display
+export function getDepartmentLabel(department: string): string {
+  const labels: Record<string, string> = {
+    drafting: 'Drafting',
+    purchasing: 'Purchasing',
+    production: 'Production',
+    qc: 'QC',
+  };
+  return labels[department] || department;
 }

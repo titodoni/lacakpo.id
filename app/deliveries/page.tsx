@@ -18,6 +18,7 @@ interface Item {
     poNumber: string;
     client: { name: string };
   };
+  tracks?: { department: string; progress: number }[];
 }
 
 export default function DeliveriesPage() {

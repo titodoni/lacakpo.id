@@ -6,24 +6,24 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting seed...\n');
 
-  // Create Super Admin
-  const adminPassword = await bcrypt.hash('admin123', 10);
+  // Create Super Admin - Password: demo
+  const defaultPassword = await bcrypt.hash('demo', 10);
   
   await prisma.user.upsert({
     where: { username: 'admin' },
     update: {},
     create: {
       username: 'admin',
-      passwordHash: adminPassword,
+      passwordHash: defaultPassword,
       name: 'Administrator',
       role: 'super_admin',
       department: 'management',
       isActive: true,
     },
   });
-  console.log('✅ Created admin (username: admin, password: admin123)');
+  console.log('✅ Created admin (username: admin, password: demo)');
 
-  // Create sample operators
+  // Create sample operators - All password: demo
   const operators = [
     { username: 'andi', name: 'Andi CNC', role: 'cnc_operator', dept: 'production' },
     { username: 'budi', name: 'Budi Drafter', role: 'drafter', dept: 'drafting' },
@@ -36,20 +36,19 @@ async function main() {
   ];
 
   for (const op of operators) {
-    const password = await bcrypt.hash(op.username + '123', 10);
     await prisma.user.upsert({
       where: { username: op.username },
       update: {},
       create: {
         username: op.username,
-        passwordHash: password,
+        passwordHash: defaultPassword,
         name: op.name,
         role: op.role,
         department: op.dept,
         isActive: true,
       },
     });
-    console.log(`✅ Created ${op.username} (password: ${op.username}123)`);
+    console.log(`✅ Created ${op.username} (password: demo)`);
   }
 
   // Sample clients - using create with upsert pattern
@@ -69,6 +68,9 @@ async function main() {
   console.log('\n✅ Created 3 sample clients');
 
   console.log('\n🎉 Seed completed successfully!');
+  console.log('\n📋 Default credentials for all users:');
+  console.log('   Username: admin / andi / budi / sari / dewi / finance / manager / sales / delivery');
+  console.log('   Password: demo');
 }
 
 main()

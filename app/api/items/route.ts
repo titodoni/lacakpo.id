@@ -46,6 +46,11 @@ export async function GET(req: NextRequest) {
             poNumber: true,
             client: { select: { name: true } },
             deliveryDeadline: true,
+            poDate: true,
+            isUrgent: true,
+            isVendorJob: true,
+            vendorName: true,
+            isPaid: true,
           },
         },
         tracks: {
@@ -59,12 +64,26 @@ export async function GET(req: NextRequest) {
           orderBy: { createdAt: 'desc' },
           take: 5,
         },
+        issues: {
+          where: { status: 'open' },
+          select: {
+            id: true,
+            priority: true,
+            status: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
       take: 100,
     });
     
-    return NextResponse.json({ items });
+    // Map items to include quantityDelivered
+    const itemsWithDeliveredQty = items.map(item => ({
+      ...item,
+      quantityDelivered: item.quantityDelivered || 0,
+    }));
+    
+    return NextResponse.json({ items: itemsWithDeliveredQty });
   } catch (error) {
     console.error('GET /api/items error:', error);
     return NextResponse.json(

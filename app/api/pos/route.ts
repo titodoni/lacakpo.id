@@ -10,6 +10,13 @@ export async function GET() {
     const pos = await prisma.purchaseOrder.findMany({
       include: {
         client: true,
+        items: {
+          select: {
+            id: true,
+            quantityTotal: true,
+            quantityDelivered: true,
+          },
+        },
         _count: {
           select: { items: true },
         },
@@ -50,6 +57,10 @@ export async function POST(req: NextRequest) {
       deliveryDeadline, 
       notes,
       isUrgent,
+      isVendorJob,
+      vendorName,
+      vendorPhone,
+      vendorEstimation,
       items 
     } = body;
 
@@ -110,6 +121,10 @@ export async function POST(req: NextRequest) {
         deliveryDeadline: deliveryDeadline ? new Date(deliveryDeadline) : null,
         notes: notes || null,
         isUrgent: isUrgent || false,
+        isVendorJob: isVendorJob || false,
+        vendorName: vendorName || null,
+        vendorPhone: vendorPhone || null,
+        vendorEstimation: vendorEstimation ? new Date(vendorEstimation) : null,
         createdBy: session.userId,
         items: {
           create: items?.map((item: any) => {
@@ -120,14 +135,11 @@ export async function POST(req: NextRequest) {
               { department: 'drafting', progress: 0 },
               { department: 'purchasing', progress: 0 },
               { department: 'qc', progress: 0 },
+              { department: 'delivery', progress: 0 },
             ];
             
-            // Add production track based on production type
-            if (prodType === 'machining' || prodType === 'both') {
-              tracks.push({ department: 'production', progress: 0 });
-            }
-            if (prodType === 'fabrication') {
-              // For fabrication only, we still use production department but could track separately
+            // Add production track based on production type (only if not vendor job)
+            if (!isVendorJob && (prodType === 'machining' || prodType === 'both' || prodType === 'fabrication')) {
               tracks.push({ department: 'production', progress: 0 });
             }
             

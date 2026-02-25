@@ -26,6 +26,10 @@ export default function NewPOPage() {
   const [deliveryDeadline, setDeliveryDeadline] = useState('');
   const [notes, setNotes] = useState('');
   const [isUrgent, setIsUrgent] = useState(false);
+  const [isVendorJob, setIsVendorJob] = useState(false);
+  const [vendorName, setVendorName] = useState('');
+  const [vendorPhone, setVendorPhone] = useState('');
+  const [vendorEstimation, setVendorEstimation] = useState('');
   const [items, setItems] = useState<ItemInput[]>([
     { id: '1', name: '', spec: '', qty: '1', unit: 'pcs', productionType: 'both' },
   ]);
@@ -115,6 +119,10 @@ export default function NewPOPage() {
           deliveryDeadline: deliveryDeadline || undefined,
           notes: notes.trim() || undefined,
           isUrgent,
+          isVendorJob,
+          vendorName: vendorName.trim() || undefined,
+          vendorPhone: vendorPhone.trim() || undefined,
+          vendorEstimation: vendorEstimation || undefined,
           items: validItems.map((item) => ({
             name: item.name,
             spec: item.spec,
@@ -272,6 +280,72 @@ export default function NewPOPage() {
                     </div>
                   </label>
                 </div>
+
+                {/* Vendor Job */}
+                <div className="md:col-span-2">
+                  <label className="flex items-center gap-3 p-4 border border-zinc-200 rounded-xl cursor-pointer hover:bg-zinc-50 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={isVendorJob}
+                      onChange={(e) => setIsVendorJob(e.target.checked)}
+                      className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500"
+                      disabled={isLoading}
+                    />
+                    <div>
+                      <span className="font-medium text-zinc-900">Pengerjaan Vendor</span>
+                      <p className="text-xs text-zinc-500 mt-0.5">
+                        Production dept tidak bisa update progress jika opsi ini aktif
+                      </p>
+                    </div>
+                  </label>
+                </div>
+
+                {/* Vendor Details - Show only if isVendorJob */}
+                {isVendorJob && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-zinc-700 mb-1">
+                        Nama Vendor <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={vendorName}
+                        onChange={(e) => setVendorName(e.target.value)}
+                        className="w-full h-12 px-4 rounded-xl border border-zinc-300 focus:border-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-100"
+                        placeholder="Nama vendor"
+                        disabled={isLoading}
+                        required={isVendorJob}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-zinc-700 mb-1">
+                        No. Telp Vendor
+                      </label>
+                      <input
+                        type="text"
+                        value={vendorPhone}
+                        onChange={(e) => setVendorPhone(e.target.value)}
+                        className="w-full h-12 px-4 rounded-xl border border-zinc-300 focus:border-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-100"
+                        placeholder="Nomor telepon vendor"
+                        disabled={isLoading}
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-zinc-700 mb-1">
+                        Estimasi Penyelesaian Vendor
+                      </label>
+                      <input
+                        type="date"
+                        value={vendorEstimation}
+                        onChange={(e) => setVendorEstimation(e.target.value)}
+                        className="w-full h-12 px-4 rounded-xl border border-zinc-300 focus:border-zinc-900 focus:outline-none focus:ring-2 focus:ring-zinc-100"
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </>
+                )}
 
                 {/* Notes */}
                 <div className="md:col-span-2">

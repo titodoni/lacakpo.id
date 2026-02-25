@@ -1,4 +1,4 @@
-import { getIronSession, IronSessionOptions } from 'iron-session';
+import { getIronSession, SessionOptions } from 'iron-session';
 import { cookies } from 'next/headers';
 
 export interface SessionData {
@@ -10,7 +10,7 @@ export interface SessionData {
   isLoggedIn: boolean;
 }
 
-export const sessionOptions: IronSessionOptions = {
+export const sessionOptions: SessionOptions = {
   password: process.env.SESSION_SECRET!,
   cookieName: 'project-tracking-session',
   cookieOptions: {

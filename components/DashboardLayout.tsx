@@ -7,14 +7,14 @@ import {
   ClipboardList, 
   PlusCircle, 
   BarChart3, 
-  User,
+  AlertTriangle,
   LogOut,
   Menu,
   X,
   Shield,
-  CheckCircle2
+  CheckCircle2,
+  Search
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -27,6 +27,13 @@ interface DashboardLayoutProps {
     isLoggedIn: boolean;
   };
 }
+
+// Color Palette
+const colors = {
+  primary: '#003049',
+  danger: '#d62828',
+  accent: '#f77f00',
+};
 
 export default function DashboardLayout({ children, user }: DashboardLayoutProps) {
   const router = useRouter();
@@ -49,26 +56,27 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
 
   const canCreatePO = ['sales_admin', 'super_admin'].includes(user.role);
   const isAdmin = user.role === 'super_admin';
+  const isViewer = ['manager'].includes(user.role);
   
   const navItems = [
-    { href: '/', icon: Home, label: 'Beranda' },
-    { href: '/pos', icon: ClipboardList, label: 'Daftar PO' },
+    { href: '/tasks', icon: ClipboardList, label: 'Tugas' },
+    { href: '/search', icon: Search, label: 'Pencarian' },
     ...(canCreatePO ? [{ href: '/pos/new', icon: PlusCircle, label: 'Buat PO' }] : []),
+    { href: '/issues', icon: AlertTriangle, label: 'Masalah' },
     ...(isAdmin ? [{ href: '/admin/users', icon: Shield, label: 'Admin' }] : []),
-    { href: '/reports', icon: BarChart3, label: 'Statistik' },
-    { href: '/profile', icon: User, label: 'Profil' },
+    ...((isAdmin || isViewer) ? [{ href: '/reports', icon: BarChart3, label: 'Laporan' }] : []),
   ];
 
   return (
-    <div className="min-h-screen bg-zinc-50">
+    <div className="min-h-screen" style={{ backgroundColor: '#ffffff' }}>
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:block fixed left-0 top-0 h-full w-64 bg-white border-r border-zinc-200">
+      <aside className="hidden lg:block fixed left-0 top-0 h-full w-64 border-r" style={{ backgroundColor: '#ffffff', borderColor: colors.accent }}>
         <div className="p-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-zinc-900 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: colors.danger }}>
               <CheckCircle2 className="w-5 h-5 text-white" />
             </div>
-            <h1 className="text-xl font-bold text-zinc-900">Tracking Proyek</h1>
+            <h1 className="text-xl font-bold" style={{ color: colors.primary }}>Tracking Proyek</h1>
           </div>
         </div>
 
@@ -82,15 +90,22 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
           ))}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-zinc-200">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t" style={{ borderColor: colors.accent }}>
           <div className="mb-4 px-4">
-            <p className="text-sm font-medium text-zinc-900">{user.name}</p>
-            <p className="text-xs text-zinc-500 capitalize">{user.role.replace('_', ' ')}</p>
+            <p className="text-sm font-medium" style={{ color: colors.primary }}>{user.name}</p>
+            <p className="text-xs capitalize" style={{ color: colors.accent }}>{user.role.replace('_', ' ')}</p>
           </div>
           <button
             onClick={handleLogout}
             disabled={isLoggingOut}
-            className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+            className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-colors"
+            style={{ color: '#ea580c' }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = `'rgba(234,88,12,0.1)'`;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
           >
             <LogOut size={18} />
             {isLoggingOut ? 'Keluar...' : 'Keluar'}
@@ -99,12 +114,19 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
       </aside>
 
       {/* Mobile Header */}
-      <header className="lg:hidden sticky top-0 z-50 bg-white border-b border-zinc-200">
+      <header className="lg:hidden sticky top-0 z-50 border-b" style={{ backgroundColor: '#ffffff', borderColor: colors.accent }}>
         <div className="flex items-center justify-between h-14 px-4">
-          <h1 className="text-lg font-bold text-zinc-900">Tracking Proyek</h1>
+          <h1 className="text-lg font-bold" style={{ color: colors.primary }}>Tracking Proyek</h1>
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-lg hover:bg-zinc-100"
+            className="p-2 rounded-lg transition-colors"
+            style={{ color: colors.accent }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#ea580c';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
           >
             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -112,7 +134,7 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="border-t border-zinc-200 px-4 py-4">
+          <div className="border-t px-4 py-4" style={{ borderColor: colors.accent }}>
             <nav className="space-y-1">
               {navItems.map((item) => (
                 <NavLink 
@@ -122,13 +144,20 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
                 />
               ))}
             </nav>
-            <div className="mt-4 pt-4 border-t border-zinc-200">
-              <p className="text-sm font-medium text-zinc-900">{user.name}</p>
-              <p className="text-xs text-zinc-500 capitalize">{user.role.replace('_', ' ')}</p>
+            <div className="mt-4 pt-4 border-t" style={{ borderColor: colors.accent }}>
+              <p className="text-sm font-medium" style={{ color: colors.primary }}>{user.name}</p>
+              <p className="text-xs capitalize" style={{ color: colors.accent }}>{user.role.replace('_', ' ')}</p>
               <button
                 onClick={handleLogout}
                 disabled={isLoggingOut}
-                className="mt-3 w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                className="mt-3 w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-colors"
+                style={{ color: '#ea580c' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = `'rgba(234,88,12,0.1)'`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
               >
                 <LogOut size={18} />
                 {isLoggingOut ? 'Keluar...' : 'Keluar'}
@@ -139,7 +168,7 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
       </header>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-200 h-16 flex items-center justify-around px-4 z-50">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 border-t h-16 flex items-center justify-around px-4 z-50" style={{ backgroundColor: '#ffffff', borderColor: colors.accent }}>
         {navItems.map((item) => (
           <MobileNavLink key={item.href} {...item} />
         ))}
@@ -172,12 +201,23 @@ function NavLink({
     <a
       href={href}
       onClick={onClick}
-      className={cn(
-        "flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-colors",
-        isActive 
-          ? "bg-zinc-900 text-white" 
-          : "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100"
-      )}
+      className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all"
+      style={{
+        backgroundColor: isActive ? colors.danger : 'transparent',
+        color: isActive ? 'white' : colors.accent,
+      }}
+      onMouseEnter={(e) => {
+        if (!isActive) {
+          e.currentTarget.style.backgroundColor = '#ea580c';
+          e.currentTarget.style.color = colors.primary;
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!isActive) {
+          e.currentTarget.style.backgroundColor = 'transparent';
+          e.currentTarget.style.color = colors.accent;
+        }
+      }}
     >
       <Icon size={18} />
       {label}
@@ -200,15 +240,16 @@ function MobileNavLink({
   return (
     <a
       href={href}
-      className={cn(
-        "flex flex-col items-center gap-1 text-xs font-medium transition-colors",
-        isActive ? "text-zinc-900" : "text-zinc-400 hover:text-zinc-600"
-      )}
+      className="flex flex-col items-center gap-1 text-xs font-medium transition-colors"
+      style={{ color: isActive ? colors.danger : '#ea580c' }}
     >
-      <div className={cn(
-        "p-1.5 rounded-xl",
-        isActive ? "bg-zinc-900 text-white" : ""
-      )}>
+      <div 
+        className="p-1.5 rounded-xl"
+        style={{ 
+          backgroundColor: isActive ? colors.danger : 'transparent',
+          color: isActive ? 'white' : 'inherit'
+        }}
+      >
         <Icon size={20} />
       </div>
       <span>{label}</span>

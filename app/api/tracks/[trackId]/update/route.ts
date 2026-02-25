@@ -17,20 +17,26 @@ export async function POST(
     // Validate progress value
     if (newProgress === undefined || newProgress < 0 || newProgress > 100) {
       return NextResponse.json(
-        { error: 'Progress must be between 0 and 100' },
+        { error: 'ERR_002', message: 'Progress must be between 0 and 100' },
         { status: 400 }
       );
     }
 
-    // Get current track
+    // Get current track with PO info
     const track = await prisma.itemTrack.findUnique({
       where: { id: trackId },
-      include: { item: true },
+      include: { 
+        item: {
+          include: {
+            purchaseOrder: true,
+          },
+        },
+      },
     });
 
     if (!track) {
       return NextResponse.json(
-        { error: 'Track not found' },
+        { error: 'ERR_005', message: 'Track not found' },
         { status: 404 }
       );
     }
@@ -38,7 +44,15 @@ export async function POST(
     // Check permissions
     if (!canUpdateTrack(session.role, track.department)) {
       return NextResponse.json(
-        { error: 'Forbidden: You cannot update this department' },
+        { error: 'ERR_007', message: 'Forbidden: You cannot update this department' },
+        { status: 403 }
+      );
+    }
+
+    // Check vendor job for production department
+    if (track.department === 'production' && track.item.purchaseOrder?.isVendorJob) {
+      return NextResponse.json(
+        { error: 'ERR_023', message: 'Production cannot update: This PO is handled by vendor' },
         { status: 403 }
       );
     }
@@ -88,7 +102,7 @@ export async function POST(
   } catch (error) {
     console.error('POST /api/tracks/[trackId]/update error:', error);
     return NextResponse.json(
-      { error: 'Failed to update progress' },
+      { error: 'ERR_001', message: 'Failed to update progress' },
       { status: 500 }
     );
   }

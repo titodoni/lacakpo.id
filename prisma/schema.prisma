@@ -25,6 +25,8 @@ model User {
   updatedTracks         ItemTrack[]     @relation("UpdatedBy")
   activityLogs          ActivityLog[]   @relation("Actor")
   deliveries            Delivery[]      @relation("DeliveredBy")
+  createdIssues         Issue[]         @relation("IssueCreator")
+  resolvedIssues        Issue[]         @relation("IssueResolver")
 
   @@map("users")
 }
@@ -52,8 +54,18 @@ model PurchaseOrder {
   poDate           DateTime @map("po_date")
   deliveryDeadline DateTime? @map("delivery_deadline")
   notes            String?
-  status           String   @default("active") // active, completed, cancelled
+  status           String   @default("active") // active, completed, cancelled, archived, finished
   isUrgent         Boolean  @default(false) @map("is_urgent")
+  isVendorJob      Boolean  @default(false) @map("is_vendor_job")
+  vendorName       String?  @map("vendor_name")
+  vendorPhone      String?  @map("vendor_phone")
+  vendorEstimation DateTime? @map("vendor_estimation")
+  isInvoiced       Boolean  @default(false) @map("is_invoiced")
+  invoicedAt       DateTime? @map("invoiced_at")
+  invoiceNumber    String?   @map("invoice_number")
+  isPaid           Boolean  @default(false) @map("is_paid")
+  paidAt           DateTime? @map("paid_at")
+  finishedAt       DateTime? @map("finished_at")
   createdBy        String   @map("created_by")
   createdAt        DateTime @default(now()) @map("created_at")
 
@@ -62,6 +74,10 @@ model PurchaseOrder {
   creator User @relation("CreatedBy", fields: [createdBy], references: [id])
   items Item[]
 
+  @@index([status], name: "idx_po_status")
+  @@index([deliveryDeadline], name: "idx_po_deadline")
+  @@index([isInvoiced], name: "idx_po_invoiced")
+  @@index([isPaid], name: "idx_po_paid")
   @@map("purchase_orders")
 }
 
@@ -83,6 +99,7 @@ model Item {
   tracks ItemTrack[]
   activityLogs ActivityLog[]
   deliveries Delivery[]
+  issues Issue[]
 
   @@index([poId], name: "idx_items_po")
   @@map("items")
@@ -149,4 +166,27 @@ model Delivery {
   deliverer User @relation("DeliveredBy", fields: [deliveredBy], references: [id])
 
   @@map("deliveries")
+}
+
+model Issue {
+  id          String   @id @default(uuid())
+  itemId      String   @map("item_id")
+  title       String
+  description String?
+  priority    String   // high, medium, low
+  status      String   @default("open") // open, resolved
+  createdBy   String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  resolvedAt  DateTime? @map("resolved_at")
+  resolvedBy  String?  @map("resolved_by")
+
+  // Relations
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  creator User @relation("IssueCreator", fields: [createdBy], references: [id])
+  resolver User? @relation("IssueResolver", fields: [resolvedBy], references: [id])
+
+  @@index([itemId], name: "idx_issues_item")
+  @@index([status], name: "idx_issues_status")
+  @@map("issues")
 }
