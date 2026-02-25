@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@libsql/client": "^0.17.0",
+    "@prisma/adapter-libsql": "^7.4.1",
     "@prisma/client": "^5.22.0",
     "@tanstack/react-query": "^5.90.21",
     "bcryptjs": "^3.0.3",

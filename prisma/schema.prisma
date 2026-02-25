@@ -1,8 +1,9 @@
 // Project tracking - Prisma Schema
-// Database: SQLite (Turso/libSQL)
+// Database: SQLite (local) / Turso (production)
 
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
