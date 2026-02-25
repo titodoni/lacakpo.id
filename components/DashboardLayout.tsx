@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { 
-  Home, 
   ClipboardList, 
   PlusCircle, 
   BarChart3, 
@@ -13,8 +12,10 @@ import {
   X,
   Shield,
   CheckCircle2,
-  Search
+  Search,
+  User
 } from 'lucide-react';
+import { PaletteSwitcherCompact } from './PaletteOptions';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -27,13 +28,6 @@ interface DashboardLayoutProps {
     isLoggedIn: boolean;
   };
 }
-
-// Color Palette
-const colors = {
-  primary: '#003049',
-  danger: '#d62828',
-  accent: '#f77f00',
-};
 
 export default function DashboardLayout({ children, user }: DashboardLayoutProps) {
   const router = useRouter();
@@ -68,15 +62,15 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
   ];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#ffffff' }}>
+    <div className="min-h-screen bg-background">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:block fixed left-0 top-0 h-full w-64 border-r" style={{ backgroundColor: '#ffffff', borderColor: colors.accent }}>
+      <aside className="hidden lg:block fixed left-0 top-0 h-full w-64 bg-sidebar-bg border-r border-sidebar-border">
         <div className="p-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: colors.danger }}>
-              <CheckCircle2 className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+              <CheckCircle2 className="w-5 h-5 text-primary-foreground" />
             </div>
-            <h1 className="text-xl font-bold" style={{ color: colors.primary }}>Tracking Proyek</h1>
+            <h1 className="text-xl font-bold text-sidebar-fg">Kreasilog</h1>
           </div>
         </div>
 
@@ -90,51 +84,57 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
           ))}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t" style={{ borderColor: colors.accent }}>
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-sidebar-border">
+          {/* Theme Switcher */}
           <div className="mb-4 px-4">
-            <p className="text-sm font-medium" style={{ color: colors.primary }}>{user.name}</p>
-            <p className="text-xs capitalize" style={{ color: colors.accent }}>{user.role.replace('_', ' ')}</p>
+            <PaletteSwitcherCompact />
           </div>
-          <button
-            onClick={handleLogout}
-            disabled={isLoggingOut}
-            className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-colors"
-            style={{ color: '#ea580c' }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = `'rgba(234,88,12,0.1)'`;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
-          >
-            <LogOut size={18} />
-            {isLoggingOut ? 'Keluar...' : 'Keluar'}
-          </button>
+          
+          <div className="mb-4 px-4">
+            <p className="text-sm font-medium text-sidebar-fg">{user.name}</p>
+            <p className="text-xs capitalize text-muted-foreground">{user.role.replace('_', ' ')}</p>
+          </div>
+          
+          <div className="flex gap-2 px-4">
+            <a
+              href="/profile"
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg 
+                bg-muted text-foreground hover:bg-muted/80 transition-colors"
+            >
+              <User size={16} />
+              Profil
+            </a>
+            <button
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg 
+                bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+            >
+              <LogOut size={16} />
+              {isLoggingOut ? '...' : 'Keluar'}
+            </button>
+          </div>
         </div>
       </aside>
 
       {/* Mobile Header */}
-      <header className="lg:hidden sticky top-0 z-50 border-b" style={{ backgroundColor: '#ffffff', borderColor: colors.accent }}>
+      <header className="lg:hidden sticky top-0 z-50 bg-sidebar-bg border-b border-sidebar-border">
         <div className="flex items-center justify-between h-14 px-4">
-          <h1 className="text-lg font-bold" style={{ color: colors.primary }}>Tracking Proyek</h1>
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 rounded-lg transition-colors"
-            style={{ color: colors.accent }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#ea580c';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
-          >
-            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          <h1 className="text-lg font-bold text-sidebar-fg">Kreasilog</h1>
+          <div className="flex items-center gap-2">
+            <PaletteSwitcherCompact />
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-lg text-muted-foreground hover:bg-muted transition-colors"
+            >
+              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="border-t px-4 py-4" style={{ borderColor: colors.accent }}>
+          <div className="border-t border-sidebar-border px-4 py-4 bg-sidebar-bg">
             <nav className="space-y-1">
               {navItems.map((item) => (
                 <NavLink 
@@ -144,32 +144,45 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
                 />
               ))}
             </nav>
-            <div className="mt-4 pt-4 border-t" style={{ borderColor: colors.accent }}>
-              <p className="text-sm font-medium" style={{ color: colors.primary }}>{user.name}</p>
-              <p className="text-xs capitalize" style={{ color: colors.accent }}>{user.role.replace('_', ' ')}</p>
-              <button
-                onClick={handleLogout}
-                disabled={isLoggingOut}
-                className="mt-3 w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-colors"
-                style={{ color: '#ea580c' }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = `'rgba(234,88,12,0.1)'`;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'transparent';
-                }}
-              >
-                <LogOut size={18} />
-                {isLoggingOut ? 'Keluar...' : 'Keluar'}
-              </button>
+            <div className="mt-4 pt-4 border-t border-sidebar-border">
+              <div className="flex items-center gap-3 px-4 mb-4">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <User className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-sidebar-fg">{user.name}</p>
+                  <p className="text-xs capitalize text-muted-foreground">{user.role.replace('_', ' ')}</p>
+                </div>
+              </div>
+              <div className="flex gap-2 px-4">
+                <a
+                  href="/profile"
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg 
+                    bg-muted text-foreground hover:bg-muted/80 transition-colors"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <User size={16} />
+                  Profil
+                </a>
+                <button
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium rounded-lg 
+                    bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                >
+                  <LogOut size={16} />
+                  {isLoggingOut ? '...' : 'Keluar'}
+                </button>
+              </div>
             </div>
           </div>
         )}
       </header>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 border-t h-16 flex items-center justify-around px-4 z-50" style={{ backgroundColor: '#ffffff', borderColor: colors.accent }}>
-        {navItems.map((item) => (
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 border-t border-sidebar-border h-16 
+        bg-sidebar-bg flex items-center justify-around px-4 z-50">
+        {navItems.slice(0, 4).map((item) => (
           <MobileNavLink key={item.href} {...item} />
         ))}
       </nav>
@@ -201,23 +214,11 @@ function NavLink({
     <a
       href={href}
       onClick={onClick}
-      className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all"
-      style={{
-        backgroundColor: isActive ? colors.danger : 'transparent',
-        color: isActive ? 'white' : colors.accent,
-      }}
-      onMouseEnter={(e) => {
-        if (!isActive) {
-          e.currentTarget.style.backgroundColor = '#ea580c';
-          e.currentTarget.style.color = colors.primary;
-        }
-      }}
-      onMouseLeave={(e) => {
-        if (!isActive) {
-          e.currentTarget.style.backgroundColor = 'transparent';
-          e.currentTarget.style.color = colors.accent;
-        }
-      }}
+      className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all
+        ${isActive 
+          ? 'bg-primary text-primary-foreground' 
+          : 'text-sidebar-fg hover:bg-sidebar-accent'
+        }`}
     >
       <Icon size={18} />
       {label}
@@ -240,15 +241,12 @@ function MobileNavLink({
   return (
     <a
       href={href}
-      className="flex flex-col items-center gap-1 text-xs font-medium transition-colors"
-      style={{ color: isActive ? colors.danger : '#ea580c' }}
+      className={`flex flex-col items-center gap-1 text-xs font-medium transition-colors
+        ${isActive ? 'text-primary' : 'text-muted-foreground'}`}
     >
       <div 
-        className="p-1.5 rounded-xl"
-        style={{ 
-          backgroundColor: isActive ? colors.danger : 'transparent',
-          color: isActive ? 'white' : 'inherit'
-        }}
+        className={`p-1.5 rounded-xl transition-colors
+          ${isActive ? 'bg-primary text-primary-foreground' : ''}`}
       >
         <Icon size={20} />
       </div>

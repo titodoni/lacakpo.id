@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { ThemeProvider } from "@/lib/themes/ThemeProvider";
 
 export const metadata: Metadata = {
-  title: "Project Tracking",
+  title: "Kreasilog - PO Tracking",
   description: "Concurrent Multi-Department Manufacturing Progress Tracking System",
 };
 
@@ -12,9 +13,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="antialiased bg-zinc-50 text-zinc-900">
-        {children}
+    <html lang="en" suppressHydrationWarning>
+      <body className="antialiased bg-background text-foreground">
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

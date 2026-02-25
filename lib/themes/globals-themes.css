@@ -1,0 +1,396 @@
+/**
+ * Kreasilog Theme System - CSS Variables
+ * All 4 themes with semantic token mapping
+ * Background is ALWAYS white (#ffffff) per spec
+ */
+
+/* ============================================
+   BASE VARIABLES (Ocean Flame - Default)
+   ============================================ */
+
+:root {
+  /* Core */
+  --background: #ffffff;
+  --foreground: #00090e;
+  
+  /* Primary */
+  --primary: #219ebc;
+  --primary-foreground: #ffffff;
+  --primary-hover: #1a7d95;
+  --primary-active: #145d70;
+  
+  /* Secondary */
+  --secondary: #023047;
+  --secondary-foreground: #ffffff;
+  
+  /* Accent */
+  --accent: #fb8500;
+  --accent-foreground: #ffffff;
+  --accent-hover: #c86b00;
+  
+  /* Muted */
+  --muted: #ceeef6;
+  --muted-foreground: #145d70;
+  
+  /* Cards */
+  --card: #ffffff;
+  --card-foreground: #00090e;
+  
+  /* Popovers */
+  --popover: #ffffff;
+  --popover-foreground: #00090e;
+  
+  /* Borders */
+  --border: #a9e1fd;
+  --border-hover: #54c3fb;
+  --input: #a9e1fd;
+  --ring: #219ebc;
+  
+  /* Status */
+  --destructive: #dc2626;
+  --destructive-foreground: #ffffff;
+  --success: #219ebc;
+  --success-foreground: #ffffff;
+  --warning: #ffb703;
+  --warning-foreground: #342500;
+  --info: #023047;
+  --info-foreground: #ffffff;
+  
+  /* Sidebar */
+  --sidebar-bg: #ffffff;
+  --sidebar-fg: #023047;
+  --sidebar-accent: #ceeef6;
+  --sidebar-border: #a9e1fd;
+  
+  /* Charts */
+  --chart-1: #219ebc;
+  --chart-2: #fb8500;
+  --chart-3: #ffb703;
+  --chart-4: #023047;
+  
+  /* Raw Colors - Ocean Flame */
+  --blue_green: #219ebc;
+  --blue_green-100: #071f25;
+  --blue_green-200: #0d3e4b;
+  --blue_green-300: #145d70;
+  --blue_green-400: #1a7d95;
+  --blue_green-500: #219ebc;
+  --blue_green-600: #39bcdc;
+  --blue_green-700: #6bcce5;
+  --blue_green-800: #9cddee;
+  --blue_green-900: #ceeef6;
+  
+  --deep_space_blue: #023047;
+  --deep_space_blue-100: #00090e;
+  --deep_space_blue-200: #01131c;
+  --deep_space_blue-300: #011c2a;
+  --deep_space_blue-400: #012638;
+  --deep_space_blue-500: #023047;
+  --deep_space_blue-600: #04699b;
+  --deep_space_blue-700: #06a3f1;
+  --deep_space_blue-800: #54c3fb;
+  --deep_space_blue-900: #a9e1fd;
+  
+  --amber_flame: #ffb703;
+  --amber_flame-100: #342500;
+  --amber_flame-200: #684b00;
+  --amber_flame-300: #9c7000;
+  --amber_flame-400: #d09500;
+  --amber_flame-500: #ffb703;
+  --amber_flame-600: #ffc637;
+  --amber_flame-700: #ffd569;
+  --amber_flame-800: #ffe39b;
+  --amber_flame-900: #fff1cd;
+  
+  --princeton_orange: #fb8500;
+  --princeton_orange-100: #321b00;
+  --princeton_orange-200: #643500;
+  --princeton_orange-300: #965000;
+  --princeton_orange-400: #c86b00;
+  --princeton_orange-500: #fb8500;
+  --princeton_orange-600: #ff9e2f;
+  --princeton_orange-700: #ffb663;
+  --princeton_orange-800: #ffce97;
+  --princeton_orange-900: #ffe7cb;
+  
+  /* Midnight Ember colors (inactive by default) */
+  --prussian_blue: #14213d;
+  --prussian_blue-100: #04070c;
+  --prussian_blue-200: #080d19;
+  --prussian_blue-300: #0c1425;
+  --prussian_blue-400: #101b31;
+  --prussian_blue-500: #14213d;
+  --prussian_blue-600: #29447e;
+  --prussian_blue-700: #3e67bf;
+  --prussian_blue-800: #7e99d5;
+  --prussian_blue-900: #beccea;
+  
+  --alabaster_grey: #e5e5e5;
+  --alabaster_grey-100: #2e2e2e;
+  --alabaster_grey-200: #5c5c5c;
+  --alabaster_grey-300: #8a8a8a;
+  --alabaster_grey-400: #b8b8b8;
+  --alabaster_grey-500: #e5e5e5;
+  --alabaster_grey-600: #ebebeb;
+  --alabaster_grey-700: #f0f0f0;
+  --alabaster_grey-800: #f5f5f5;
+  --alabaster_grey-900: #fafafa;
+  
+  /* Teal Gold Luxe colors */
+  --ink_black: #0c1618;
+  --ink_black-100: #020405;
+  --ink_black-200: #050909;
+  --ink_black-300: #070d0e;
+  --ink_black-400: #0a1113;
+  --ink_black-500: #0c1618;
+  --ink_black-600: #2c5057;
+  --ink_black-700: #4c8a96;
+  --ink_black-800: #81b5bf;
+  --ink_black-900: #c0dadf;
+  
+  --pine_teal: #004643;
+  --pine_teal-100: #000e0e;
+  --pine_teal-200: #001d1b;
+  --pine_teal-300: #002b29;
+  --pine_teal-400: #003936;
+  --pine_teal-500: #004643;
+  --pine_teal-600: #009f97;
+  --pine_teal-700: #00f7ea;
+  --pine_teal-800: #50fff6;
+  --pine_teal-900: #a7fffb;
+  
+  --cornsilk: #faf4d3;
+  --cornsilk-100: #534809;
+  --cornsilk-200: #a58f12;
+  --cornsilk-300: #e8cb2c;
+  --cornsilk-400: #f1e07e;
+  --cornsilk-500: #faf4d3;
+  --cornsilk-600: #fbf6da;
+  --cornsilk-700: #fcf8e3;
+  --cornsilk-800: #fdfbed;
+  --cornsilk-900: #fefdf6;
+  
+  --metallic_gold: #d1ac00;
+  --metallic_gold-100: #2a2200;
+  --metallic_gold-200: #544400;
+  --metallic_gold-300: #7d6600;
+  --metallic_gold-400: #a78900;
+  --metallic_gold-500: #d1ac00;
+  --metallic_gold-600: #ffd30e;
+  --metallic_gold-700: #ffde4a;
+  --metallic_gold-800: #ffe987;
+  --metallic_gold-900: #fff4c3;
+  
+  /* Warm Ivory colors */
+  --porcelain: #fffffc;
+  --porcelain-100: #656500;
+  --porcelain-200: #caca00;
+  --porcelain-300: #ffff30;
+  --porcelain-400: #ffff95;
+  --porcelain-500: #fffffc;
+  --porcelain-600: #fffffb;
+  --porcelain-700: #fffffc;
+  --porcelain-800: #fffffd;
+  --porcelain-900: #fffffe;
+  
+  --khaki_beige: #beb7a4;
+  --khaki_beige-100: #29261d;
+  --khaki_beige-200: #524c3a;
+  --khaki_beige-300: #7c7258;
+  --khaki_beige-400: #a09679;
+  --khaki_beige-500: #beb7a4;
+  --khaki_beige-600: #cbc5b5;
+  --khaki_beige-700: #d8d3c8;
+  --khaki_beige-800: #e5e2da;
+  --khaki_beige-900: #f2f0ed;
+  
+  --vivid_tangerine: #ff7f11;
+  --vivid_tangerine-100: #361900;
+  --vivid_tangerine-200: #6c3200;
+  --vivid_tangerine-300: #a24c00;
+  --vivid_tangerine-400: #d86500;
+  --vivid_tangerine-500: #ff7f11;
+  --vivid_tangerine-600: #ff993f;
+  --vivid_tangerine-700: #ffb26f;
+  --vivid_tangerine-800: #ffcc9f;
+  --vivid_tangerine-900: #ffe5cf;
+}
+
+/* ============================================
+   THEME: MIDNIGHT EMBER
+   ============================================ */
+
+[data-theme="midnight-ember"] {
+  --foreground: #04070c;
+  
+  --primary: #14213d;
+  --primary-foreground: #ffffff;
+  --primary-hover: #101b31;
+  --primary-active: #0c1425;
+  
+  --secondary: #000000;
+  --secondary-foreground: #ffffff;
+  
+  --accent: #fca311;
+  --accent-foreground: #362101;
+  --accent-hover: #d68502;
+  
+  --muted: #fafafa;
+  --muted-foreground: #5c5c5c;
+  
+  --card-foreground: #04070c;
+  --popover-foreground: #04070c;
+  
+  --border: #e5e5e5;
+  --border-hover: #b8b8b8;
+  --input: #e5e5e5;
+  --ring: #fca311;
+  
+  --success: #14213d;
+  --warning: #fca311;
+  --warning-foreground: #362101;
+  --info: #3e67bf;
+  
+  --sidebar-fg: #14213d;
+  --sidebar-accent: #fafafa;
+  --sidebar-border: #e5e5e5;
+  
+  --chart-1: #14213d;
+  --chart-2: #fca311;
+  --chart-3: #3e67bf;
+  --chart-4: #000000;
+}
+
+/* ============================================
+   THEME: TEAL GOLD LUXE
+   ============================================ */
+
+[data-theme="teal-gold-luxe"] {
+  --foreground: #020405;
+  
+  --primary: #004643;
+  --primary-foreground: #ffffff;
+  --primary-hover: #003936;
+  --primary-active: #002b29;
+  
+  --secondary: #0c1618;
+  --secondary-foreground: #ffffff;
+  
+  --accent: #d1ac00;
+  --accent-foreground: #2a2200;
+  --accent-hover: #a78900;
+  
+  --muted: #fefdf6;
+  --muted-foreground: #534809;
+  
+  --card-foreground: #020405;
+  --popover-foreground: #020405;
+  
+  --border: #fdfbed;
+  --border-hover: #f1e07e;
+  --input: #fdfbed;
+  --ring: #d1ac00;
+  
+  --success: #004643;
+  --warning: #d1ac00;
+  --warning-foreground: #2a2200;
+  --info: #009f97;
+  
+  --sidebar-fg: #004643;
+  --sidebar-accent: #fefdf6;
+  --sidebar-border: #fdfbed;
+  
+  --chart-1: #004643;
+  --chart-2: #d1ac00;
+  --chart-3: #009f97;
+  --chart-4: #0c1618;
+}
+
+/* ============================================
+   THEME: WARM IVORY
+   ============================================ */
+
+[data-theme="warm-ivory"] {
+  --foreground: #000000;
+  
+  --primary: #beb7a4;
+  --primary-foreground: #29261d;
+  --primary-hover: #a09679;
+  --primary-active: #7c7258;
+  
+  --secondary: #000000;
+  --secondary-foreground: #ffffff;
+  
+  --accent: #ff7f11;
+  --accent-foreground: #ffffff;
+  --accent-hover: #d86500;
+  
+  --muted: #f2f0ed;
+  --muted-foreground: #524c3a;
+  
+  --card-foreground: #000000;
+  --popover-foreground: #000000;
+  
+  --border: #e5e2da;
+  --border-hover: #d8d3c8;
+  --input: #e5e2da;
+  --ring: #ff7f11;
+  
+  --success: #524c3a;
+  --warning: #ff7f11;
+  --warning-foreground: #361900;
+  --info: #7c7258;
+  
+  --sidebar-fg: #29261d;
+  --sidebar-accent: #f2f0ed;
+  --sidebar-border: #e5e2da;
+  
+  --chart-1: #beb7a4;
+  --chart-2: #ff7f11;
+  --chart-3: #29261d;
+  --chart-4: #000000;
+}
+
+/* ============================================
+   USAGE EXAMPLES (Reference)
+   ============================================ */
+
+/*
+BACKGROUND: Always white
+  bg-background → #ffffff
+  
+TEXT:
+  text-foreground → Darkest color (varies by theme)
+  text-muted-foreground → Secondary text
+  
+PRIMARY BUTTONS:
+  bg-primary text-primary-foreground
+  hover:bg-primary-hover
+  active:bg-primary-active
+  
+ACCENT BUTTONS (CTAs):
+  bg-accent text-accent-foreground
+  hover:bg-accent-hover
+  
+SECONDARY/OUTLINE:
+  border border-border bg-white
+  hover:border-border-hover
+  hover:bg-muted
+  
+STATUS BADGES:
+  Delivered: bg-success text-success-foreground
+  Pending: bg-warning text-warning-foreground
+  Overdue: bg-destructive text-destructive-foreground
+  
+CARDS:
+  bg-card border border-border
+  
+INPUTS:
+  border border-input
+  focus:ring-2 focus:ring-ring
+  
+SIDEBAR:
+  bg-sidebar-bg border-r border-sidebar-border
+  text-sidebar-fg
+  hover:bg-sidebar-accent
+*/

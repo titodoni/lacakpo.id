@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronDown, Loader2 } from 'lucide-react';
+import { ChevronDown, Loader2, CheckCircle2 } from 'lucide-react';
 
 interface User {
   id: string;
@@ -24,13 +24,6 @@ const roleLabels: Record<string, string> = {
   qc: 'QC',
   delivery: 'Delivery',
   finance: 'Finance',
-};
-
-// Color Palette
-const colors = {
-  primary: '#003049',
-  danger: '#d62828',
-  accent: '#f77f00',
 };
 
 export default function LoginPage() {
@@ -102,53 +95,36 @@ export default function LoginPage() {
   }, {} as Record<string, User[]>);
 
   return (
-    <div 
-      className="min-h-screen flex items-center justify-center px-4"
-      style={{ backgroundColor: '#ffffff' }}
-    >
+    <div className="min-h-screen flex items-center justify-center px-4 bg-background">
       <div className="w-full max-w-sm">
         {/* Logo/Title */}
         <div className="text-center mb-8">
-          <div 
-            className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center"
-            style={{ backgroundColor: colors.primary }}
-          >
-            <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-            </svg>
+          <div className="w-16 h-16 rounded-2xl mx-auto mb-4 flex items-center justify-center bg-primary">
+            <CheckCircle2 className="w-8 h-8 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-bold" style={{ color: colors.primary }}>
-            Tracking Proyek
+          <h1 className="text-3xl font-bold text-foreground">
+            Kreasilog
           </h1>
-          <p className="mt-2" style={{ color: colors.accent }}>
+          <p className="mt-2 text-muted-foreground">
             Sistem Tracking Progress Manufaktur
           </p>
         </div>
 
         {/* Login Card */}
-        <div 
-          className="rounded-2xl p-6 shadow-sm"
-          style={{ backgroundColor: '#ffffff', border: `1px solid ${colors.accent}` }}
-        >
-          <h2 className="text-lg font-semibold mb-6" style={{ color: colors.primary }}>
+        <div className="rounded-2xl p-6 shadow-sm bg-card border border-border">
+          <h2 className="text-lg font-semibold mb-6 text-foreground">
             Masuk
           </h2>
 
           {error && (
-            <div 
-              className="mb-4 p-3 text-sm rounded-xl"
-              style={{ backgroundColor: '#fee2e2', color: colors.danger }}
-            >
+            <div className="mb-4 p-3 text-sm rounded-xl bg-destructive/10 text-destructive">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label 
-                className="block text-sm font-medium mb-1"
-                style={{ color: colors.primary }}
-              >
+              <label className="block text-sm font-medium mb-1 text-foreground">
                 Pilih User
               </label>
               <div className="relative">
@@ -156,8 +132,9 @@ export default function LoginPage() {
                   value={selectedUser}
                   onChange={(e) => setSelectedUser(e.target.value)}
                   disabled={isLoadingUsers || isLoading}
-                  className="w-full h-12 px-4 pr-10 rounded-xl border transition-all appearance-none bg-white"
-                  style={{ borderColor: colors.accent }}
+                  className="w-full h-12 px-4 pr-10 rounded-xl border border-input bg-white 
+                    transition-all appearance-none focus:ring-2 focus:ring-ring focus:border-transparent
+                    disabled:opacity-50"
                 >
                   <option value="">{isLoadingUsers ? 'Memuat...' : 'Pilih user'}</option>
                   {Object.entries(groupedUsers).map(([group, groupUsers]) => (
@@ -170,18 +147,12 @@ export default function LoginPage() {
                     </optgroup>
                   ))}
                 </select>
-                <ChevronDown 
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none"
-                  style={{ color: colors.accent }}
-                />
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 pointer-events-none text-muted-foreground" />
               </div>
             </div>
 
             <div>
-              <label 
-                className="block text-sm font-medium mb-1"
-                style={{ color: colors.primary }}
-              >
+              <label className="block text-sm font-medium mb-1 text-foreground">
                 Password
               </label>
               <input
@@ -190,8 +161,9 @@ export default function LoginPage() {
                 data-testid="password-input"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full h-12 px-4 rounded-xl border transition-all"
-                style={{ borderColor: colors.accent }}
+                className="w-full h-12 px-4 rounded-xl border border-input bg-white 
+                  transition-all focus:ring-2 focus:ring-ring focus:border-transparent
+                  disabled:opacity-50"
                 placeholder="Masukkan password"
                 disabled={isLoading}
               />
@@ -201,8 +173,11 @@ export default function LoginPage() {
               type="submit"
               data-testid="login-button"
               disabled={isLoading || isLoadingUsers}
-              className="w-full h-14 text-white rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] transition-transform mt-2 flex items-center justify-center"
-              style={{ backgroundColor: colors.danger }}
+              className="w-full h-14 text-primary-foreground rounded-xl font-semibold 
+                bg-primary hover:bg-primary-hover active:bg-primary-active
+                disabled:opacity-50 disabled:cursor-not-allowed 
+                active:scale-[0.98] transition-all mt-2 
+                flex items-center justify-center"
             >
               {isLoading ? (
                 <>
@@ -218,12 +193,12 @@ export default function LoginPage() {
 
         {/* Demo Credentials */}
         <div className="mt-6 text-center">
-          <p className="text-xs" style={{ color: colors.accent }}>
+          <p className="text-xs text-muted-foreground">
             Password Default
           </p>
-          <div className="mt-2 space-y-1 text-xs" style={{ color: colors.primary }}>
-            <p className="font-medium">demo</p>
-            <p style={{ color: colors.accent }}>
+          <div className="mt-2 space-y-1 text-xs">
+            <p className="font-medium text-foreground">demo</p>
+            <p className="text-muted-foreground">
               (Semua user menggunakan password yang sama)
             </p>
           </div>
