@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 // Edge runtime for faster API responses
 export const runtime = 'edge';
 export const preferredRegion = 'iad1'; // US East (N. Virginia) - closest to SQLite/Turso

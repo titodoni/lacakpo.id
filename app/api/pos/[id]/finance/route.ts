@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+
 // PUT /api/pos/[id]/finance - Update finance status (invoicing & payment)
 export async function PUT(
   req: NextRequest,

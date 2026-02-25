@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/items/[itemId]/issues - List all issues for an item
 export async function GET(
   request: NextRequest,

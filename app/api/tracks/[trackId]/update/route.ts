@@ -3,6 +3,8 @@ import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { generateSystemMessage, canUpdateTrack } from '@/lib/utils';
 
+export const dynamic = 'force-dynamic';
+
 // POST /api/tracks/[trackId]/update - Update track progress
 export async function POST(
   req: NextRequest,

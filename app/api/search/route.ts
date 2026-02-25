@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
+// Force dynamic rendering (uses cookies for auth)
+export const dynamic = 'force-dynamic';
+
 // GET /api/search - Search POs and items
 export async function GET(req: NextRequest) {
   try {

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 // PATCH /api/issues/[issueId] - Update an issue (edit or resolve)
 export async function PATCH(
   request: NextRequest,
