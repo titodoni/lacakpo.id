@@ -4,7 +4,7 @@ import { ThemeProvider } from "@/lib/themes/ThemeProvider";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
-  title: "Kreasilog - PO Tracking",
+  title: "lacakPO.id - Sistem Tracking PO",
   description: "Concurrent Multi-Department Manufacturing Progress Tracking System",
 };
 

@@ -103,7 +103,7 @@ export default function LoginPage() {
             <CheckCircle2 className="w-8 h-8 text-primary-foreground" />
           </div>
           <h1 className="text-3xl font-bold text-foreground">
-            Kreasilog
+            lacakPO.id
           </h1>
           <p className="mt-2 text-muted-foreground">
             Sistem Tracking Progress Manufaktur

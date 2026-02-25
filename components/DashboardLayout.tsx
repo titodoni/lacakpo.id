@@ -70,7 +70,7 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
             <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
               <CheckCircle2 className="w-5 h-5 text-primary-foreground" />
             </div>
-            <h1 className="text-xl font-bold text-sidebar-fg">Kreasilog</h1>
+            <h1 className="text-xl font-bold text-sidebar-fg">lacakPO.id</h1>
           </div>
         </div>
 
@@ -120,7 +120,7 @@ export default function DashboardLayout({ children, user }: DashboardLayoutProps
       {/* Mobile Header */}
       <header className="lg:hidden sticky top-0 z-50 bg-sidebar-bg border-b border-sidebar-border">
         <div className="flex items-center justify-between h-14 px-4">
-          <h1 className="text-lg font-bold text-sidebar-fg">Kreasilog</h1>
+          <h1 className="text-lg font-bold text-sidebar-fg">lacakPO.id</h1>
           <div className="flex items-center gap-2">
             <PaletteSwitcherCompact />
             <button

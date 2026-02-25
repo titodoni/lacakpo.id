@@ -14,7 +14,7 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-const THEME_STORAGE_KEY = 'kreasilog-theme';
+const THEME_STORAGE_KEY = 'lacakpo-theme';
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<ThemeKey>(DEFAULT_THEME);

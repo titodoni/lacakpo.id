@@ -1,5 +1,5 @@
 /**
- * Kreasilog Color Palette Engine
+ * lacakPO.id Color Palette Engine
  * 4 Premium Themes with Semantic Token Mapping
  * 
  * Constraints:
