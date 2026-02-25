@@ -1,9 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { cn, canUpdateTrack } from '@/lib/utils';
 import { IssueBadge } from './IssueBadge';
 import { AlertTriangle } from 'lucide-react';
+
+// Custom debounce hook
+function useDebouncedCallback<T extends (...args: any[]) => void>(
+  callback: T,
+  delay: number
+) {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  return useCallback(
+    (...args: Parameters<T>) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = setTimeout(() => {
+        callback(...args);
+      }, delay);
+    },
+    [callback, delay]
+  );
+}
 
 export interface Track {
   id: string;
@@ -174,6 +194,10 @@ export function ItemCard({
   
   const [savedFeedback, setSavedFeedback] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Refs for preventing duplicate requests and tracking pending operations
+  const pendingSaveRef = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Vendor job: production dept cannot update progress
   const isProductionDept = userDept === 'production';
@@ -206,6 +230,15 @@ export function ItemCard({
     setDisplayDelivered(item.quantityDelivered);
     setDeliveryValue(item.quantityDelivered);
   }, [item.quantityDelivered]);
+  
+  // Cleanup: abort pending requests on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   const handleProgressClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -221,16 +254,31 @@ export function ItemCard({
   };
 
   const handleUpdateProgress = async (trackId: string, newProgress: number) => {
+    // Prevent duplicate submissions
+    if (pendingSaveRef.current) {
+      return;
+    }
+    
+    // Cancel any pending request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
     const oldProgress = displayProgress;
     setDisplayProgress(newProgress);
     setIsEditing(false);
     setIsSaving(true);
+    pendingSaveRef.current = true;
+    
+    // Create new abort controller for this request
+    abortControllerRef.current = new AbortController();
     
     try {
       const res = await fetch(`/api/tracks/${trackId}/update`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ newProgress }),
+        signal: abortControllerRef.current.signal,
       });
       
       if (res.ok) {
@@ -244,23 +292,54 @@ export function ItemCard({
         alert('Gagal menyimpan progress');
       }
     } catch (error) {
+      // Don't revert on abort (user cancelled)
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        setIsSaving(false);
+        return;
+      }
       setDisplayProgress(oldProgress);
       setIsSaving(false);
       alert('Gagal menyimpan progress');
+    } finally {
+      pendingSaveRef.current = false;
+      abortControllerRef.current = null;
     }
   };
+  
+  // Debounced version for slider updates
+  const debouncedUpdateProgress = useDebouncedCallback(
+    (trackId: string, newProgress: number) => {
+      handleUpdateProgress(trackId, newProgress);
+    },
+    300 // 300ms debounce
+  );
 
   const handleUpdateDelivery = async (newQuantity: number) => {
+    // Prevent duplicate submissions
+    if (pendingSaveRef.current) {
+      return;
+    }
+    
+    // Cancel any pending request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    
     const oldQuantity = displayDelivered;
     setDisplayDelivered(newQuantity);
     setIsEditingDelivery(false);
     setIsSaving(true);
+    pendingSaveRef.current = true;
+    
+    // Create new abort controller for this request
+    abortControllerRef.current = new AbortController();
     
     try {
       const res = await fetch(`/api/items/${item.id}/delivery`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ quantityDelivered: newQuantity }),
+        signal: abortControllerRef.current.signal,
       });
       
       if (res.ok) {
@@ -274,11 +353,27 @@ export function ItemCard({
         alert('Gagal menyimpan quantity delivered');
       }
     } catch (error) {
+      // Don't revert on abort (user cancelled)
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        setIsSaving(false);
+        return;
+      }
       setDisplayDelivered(oldQuantity);
       setIsSaving(false);
       alert('Gagal menyimpan quantity delivered');
+    } finally {
+      pendingSaveRef.current = false;
+      abortControllerRef.current = null;
     }
   };
+  
+  // Debounced version for delivery slider
+  const debouncedUpdateDelivery = useDebouncedCallback(
+    (newQuantity: number) => {
+      handleUpdateDelivery(newQuantity);
+    },
+    300 // 300ms debounce
+  );
 
   const getDaysLeftText = () => {
     if (daysLeft === null) return null;

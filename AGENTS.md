@@ -1,29 +1,25 @@
-# PO Tracker (KreasiLog) - AGENTS.md
+# PO Tracker (KreasiLog / lacakPO.id) - AGENTS.md
 
-> **Project Status**: Active Development  
+> **Project Status**: Production Ready  
 > **Language**: Indonesian (UI) + English (Code/Documentation)  
 > **Last Updated**: 2026-02-25
 
 ---
-#RULES :
-don't do Shell command prompting, give me the prompt, i run it myself
-
-
-
 
 ## 1. Project Overview
 
-**PO Tracker** (also referred to as **KreasiLog**) is a **Concurrent Multi-Department Manufacturing Progress Tracking System**. It enables multiple departments to track progress on the same Purchase Order (PO) items simultaneously without workflow locks or blocking.
+**PO Tracker** (also referred to as **KreasiLog** or **lacakPO.id**) is a **Concurrent Multi-Department Manufacturing Progress Tracking System**. It enables multiple departments to track progress on the same Purchase Order (PO) items simultaneously without workflow locks or blocking.
 
 ### Key Differentiators
 - **No Workflow Lock**: All departments can update progress anytime, no required sequence
 - **Independent Progress**: Drafting 30%, Purchasing 80%, Production 50% — all valid concurrently
 - **Auto-Audit Trail**: Every change is automatically logged by the system (who, when, from what to what)
-- **Smart Input**: Slider + Quick Set (0/25/50/75/100) + Fine adjustment
+- **Smart Input**: Slider + Quick Set (0/25/50/75/100) + Fine adjustment (-5%/+5%)
 - **Dual PO System**: PO Internal (primary) + PO Client (optional reference)
 - **Issue Tracking**: Built-in issue reporting and resolution system
 - **Finance Integration**: Invoicing and payment tracking
 - **Vendor Job Support**: POs can be marked as vendor jobs (external production)
+- **Multi-Theme System**: 4 premium themes with runtime switching
 
 ### Concurrent Track Model Example
 ```
@@ -66,15 +62,17 @@ No blocking between departments
 ```
 app/
 ├── api/                      # API Routes (RESTful)
-│   ├── admin/users/         # User management (admin only)
+│   ├── admin/
+│   │   ├── reset-data/      # Reset data endpoint (admin only)
+│   │   └── users/           # User management (admin only)
 │   ├── auth/                # Authentication (login/logout/me)
 │   ├── clients/             # Client CRUD
 │   ├── dashboard/           # Dashboard statistics
 │   ├── deliveries/          # Delivery management
 │   ├── issues/              # Issue reporting and resolution
-│   ├── items/               # Item operations (delivery, issues)
+│   ├── items/               # Item operations (delivery, issues, details)
 │   ├── logs/                # Activity logs
-│   ├── pos/                 # Purchase Orders CRUD
+│   ├── pos/                 # Purchase Orders CRUD + finance
 │   ├── reports/dashboard/   # Statistics/reporting
 │   ├── search/              # Global search
 │   ├── tracks/[trackId]/update/  # Progress update endpoint
@@ -93,19 +91,27 @@ app/
 ├── reports/                 # Statistics/reports page
 ├── search/                  # Global search page
 ├── tasks/                   # Department tasks page
-├── globals.css              # Global styles + Tailwind v4
-├── layout.tsx               # Root layout
+├── globals.css              # Global styles + Tailwind v4 + color tokens
+├── layout.tsx               # Root layout with ThemeProvider
 ├── not-found.tsx            # 404 page
 └── page.tsx                 # Dashboard (home) with role-based redirects
 
 components/
 ├── ui/                      # shadcn/ui components (auto-generated)
+├── reports/                 # Report-specific components
+│   ├── DelayedItemsTable.tsx
+│   ├── FinishedTable.tsx
+│   ├── OngoingTable.tsx
+│   ├── ProblemsTable.tsx
+│   ├── ReportsDashboard.tsx
+│   └── ReportsDashboardSkeleton.tsx
 ├── ActivityLogItem.tsx      # Activity log display component
 ├── CompactProgressInput.tsx # Compact progress input for mobile
 ├── DashboardLayout.tsx      # Main app layout with sidebar/nav
 ├── IssueBadge.tsx           # Issue priority badge component
 ├── IssueList.tsx            # Issue list display component
 ├── ItemCard.tsx             # Item card component
+├── PaletteOptions.tsx       # Theme switcher component
 ├── ReportIssueModal.tsx     # Issue reporting modal
 ├── SmartProgressInput.tsx   # Smart progress input component
 ├── StatCard.tsx             # Statistics card component
@@ -115,6 +121,12 @@ hooks/
 └── useUser.ts               # React hook for current user
 
 lib/
+├── themes/                  # Theme system
+│   ├── color-palette-engine.ts  # 4 premium theme definitions
+│   ├── globals-themes.css       # Theme CSS variables
+│   ├── index.ts                 # Theme barrel exports
+│   ├── ThemeProvider.tsx        # Theme context provider
+│   └── USAGE_GUIDE.md           # Theme usage documentation
 ├── auth.ts                  # Iron session configuration & helpers
 ├── department-info.ts       # Department explanations and milestones
 ├── error-codes.ts           # Error code system for user-friendly messages
@@ -126,11 +138,11 @@ prisma/
 ├── migrations/              # Database migrations
 ├── seed.ts                  # Seed data (users, clients) - password: demo
 ├── seed-demo-data.ts        # Demo PO data seed
+├── seed-new-data.ts         # Additional seed data
 └── reset-passwords.ts       # Reset all passwords utility
 
-
 public/                      # Static assets
-docs/                        # Documentation (pmd.md, ui.md, build.md)
+docs/                        # Documentation (pmd.md, ui.md, build.md, deploy.md)
 ```
 
 ---
@@ -208,7 +220,7 @@ docs/                        # Documentation (pmd.md, ui.md, build.md)
 |-------|------|-------|
 | id | String (UUID) | Primary Key |
 | item_id | String | FK → items(id), CASCADE DELETE |
-| department | String | drafting/purchasing/production/qc/delivery |
+| department | String | drafting/purchasing/production/qc |
 | progress | Int | Default: 0 (0-100) |
 | updated_by | String | FK → users(id) |
 | updated_at | DateTime | |
@@ -285,22 +297,21 @@ npm run dev              # Start development server (Next.js dev)
 # Production
 npm run build            # Build for production
 npm run start            # Start production server
-npm run vercel-build     # Full build for Vercel (migrate + build)
+npm run vercel-build     # Full build for Vercel (prisma generate + build)
 
 # Database
 npm run db:migrate       # Prisma migrate dev
 npm run db:deploy        # Prisma migrate deploy (production)
 npm run db:seed          # Seed database with initial users/clients
 npm run db:seed:demo     # Seed with demo PO data
+npm run db:seed:new      # Seed with new additional data
 npm run db:reset-passwords  # Reset all passwords to 'demo'
 
 # Linting
 npm run lint             # Run ESLint
 
-npm run test:order             # Run sequential test suite
-npm run test:order:headed      # Sequential tests with visible browser
-npm run test:smoke             # Run smoke tests only
-npm run test:serial            # Run all tests serially (workers=1)
+# Bundle Analysis
+npm run analyze          # Analyze bundle size with @next/bundle-analyzer
 ```
 
 ### Local Development Setup
@@ -399,24 +410,26 @@ vercel --prod
 
 ## 8. Code Style Guidelines
 
-### Design System (Current)
+### Design System (Multi-Theme)
 
-The project uses a **Prussian Blue + Deep Teal** color palette defined in `DashboardLayout.tsx`:
+The project uses a **dynamic theme system** with 4 premium themes defined in `lib/themes/color-palette-engine.ts`:
 
-| Color Name | Hex | Usage |
-|------------|-----|-------|
-| `prussianBlue` | `#001427` | Primary text, headers |
-| `prussianBlue600` | `#004687` | Active nav, primary accent |
-| `deepTeal` | `#708d81` | Secondary text |
-| `deepTeal300` | `#44554e` | Subtle text |
-| `deepTeal600` | `#8ea49b` | Hover states |
-| `deepTeal700` | `#aabbb4` | Borders |
-| `deepTeal800` | `#c6d2cd` | Light backgrounds |
-| `deepTeal900` | `#e3e8e6` | Page background |
-| `jasmine` | `#f4d58d` | Accent highlights |
-| `jasmine400` | `#edba45` | Active states |
-| `brickEmber` | `#bf0603` | Error/danger |
-| `bloodRed` | `#8d0801` | Critical alerts |
+1. **ocean-flame** (default) - Blue-green + Orange
+2. **midnight-ember** - Prussian blue + Warm orange
+3. **teal-gold-luxe** - Pine teal + Metallic gold
+4. **warm-ivory** - Khaki beige + Tangerine
+
+### Semantic Color Tokens
+Each theme provides these semantic tokens via CSS variables:
+- `--background`, `--foreground` - Base colors
+- `--primary`, `--primary-foreground`, `--primary-hover` - Brand primary
+- `--secondary`, `--secondary-foreground` - Secondary actions
+- `--accent`, `--accent-foreground`, `--accent-hover` - CTAs and highlights
+- `--muted`, `--muted-foreground` - Subtle backgrounds
+- `--card`, `--card-foreground` - Card surfaces
+- `--border`, `--input`, `--ring` - Form elements
+- `--destructive`, `--success`, `--warning`, `--info` - Status colors
+- `--sidebar-*` - Sidebar specific tokens
 
 ### Progress Color Mapping (lib/utils.ts)
 ```typescript
@@ -451,12 +464,12 @@ bg-white rounded-2xl p-5 border border-zinc-200
 ### Button Pattern
 ```css
 /* Primary */
-bg-zinc-900 text-white h-14 rounded-xl font-semibold
+bg-primary text-primary-foreground h-14 rounded-xl font-semibold
 active:scale-[0.98] transition-transform
 
 /* Secondary */
-bg-zinc-100 text-zinc-700 h-12 rounded-xl
-hover:bg-zinc-200 active:scale-[0.98]
+bg-muted text-foreground h-12 rounded-xl
+hover:bg-muted/80 active:scale-[0.98]
 ```
 
 ---
@@ -478,6 +491,7 @@ hover:bg-zinc-200 active:scale-[0.98]
 | **Delivery** | delivery | demo |
 
 ---
+
 ## 10. User Roles & Permissions
 
 | Role | Can Update Tracks | Can View All | Special Permissions |
@@ -550,6 +564,7 @@ Each department has defined milestones for progress tracking:
 | GET | `/api/issues` | List issues | Yes |
 | PATCH | `/api/issues/[issueId]` | Update issue status | Yes |
 | GET | `/api/search` | Global search | Yes |
+| POST | `/api/admin/reset-data` | Reset all data | Yes (admin only) |
 | GET | `/api/admin/users` | List all users | Yes (admin only) |
 | POST | `/api/admin/users` | Create user | Yes (admin only) |
 | PATCH | `/api/admin/users/[id]` | Update user | Yes (admin only) |
@@ -615,7 +630,39 @@ const errorMessage = formatErrorMessage({ error: 'ERR_007' });
 
 ---
 
-## 14. Security Considerations
+## 14. Theme System
+
+The project features a sophisticated **runtime theme switching system** with 4 premium themes.
+
+### Theme Files
+- `lib/themes/color-palette-engine.ts` - Theme definitions and color scales
+- `lib/themes/ThemeProvider.tsx` - React context for theme state
+- `lib/themes/globals-themes.css` - Generated CSS variables
+- `components/PaletteOptions.tsx` - Theme switcher UI
+
+### Available Themes
+1. **Ocean Flame** (`ocean-flame`) - Vibrant blue-green with warm orange accent
+2. **Midnight Ember** (`midnight-ember`) - Sophisticated dark blue with ember glow
+3. **Teal Gold Luxe** (`teal-gold-luxe`) - Rich pine teal with metallic gold
+4. **Warm Ivory** (`warm-ivory`) - Warm inviting beige with tangerine
+
+### Using Themes
+```typescript
+import { useTheme, ThemeSwitcher } from '@/lib/themes';
+
+// Get current theme
+const { theme, setTheme, availableThemes } = useTheme();
+
+// Set theme
+setTheme('midnight-ember');
+
+// Use theme colors in components (via CSS variables)
+// bg-primary, text-primary-foreground, etc.
+```
+
+---
+
+## 15. Security Considerations
 
 ### Implemented Security Measures
 - ✅ **SESSION_SECRET** required (32+ characters)
@@ -636,7 +683,7 @@ const errorMessage = formatErrorMessage({ error: 'ERR_007' });
 
 ---
 
-## 15. Key Files Reference
+## 16. Key Files Reference
 
 | File | Purpose |
 |------|---------|
@@ -645,6 +692,8 @@ const errorMessage = formatErrorMessage({ error: 'ERR_007' });
 | `lib/utils.ts` | cn(), formatters, role maps, progress colors |
 | `lib/department-info.ts` | Department milestones and explanations |
 | `lib/error-codes.ts` | Error code system |
+| `lib/themes/color-palette-engine.ts` | Theme definitions |
+| `lib/themes/ThemeProvider.tsx` | Theme context provider |
 | `prisma/schema.prisma` | Database schema |
 | `components/DashboardLayout.tsx` | Main app shell with navigation |
 | `components/SmartProgressInput.tsx` | Progress update UI |
@@ -653,7 +702,7 @@ const errorMessage = formatErrorMessage({ error: 'ERR_007' });
 
 ---
 
-## 16. Troubleshooting
+## 17. Troubleshooting
 
 | Issue | Solution |
 |-------|----------|
@@ -680,15 +729,16 @@ npm run db:reset-passwords
 
 ---
 
-## 17. Documentation Files
+## 18. Documentation Files
 
 | File | Description |
 |------|-------------|
 | `docs/build.md` | Build & Deployment Guide |
 | `docs/pmd.md` | Project Management Document - Architecture, Schema, API |
 | `docs/ui.md` | UI/UX Design System - Components, Colors, Layouts |
+| `docs/deploy.md` | Deployment-specific instructions |
 
 ---
 
-*Document Version: 1.3*  
-*Status: Active Development*
+*Document Version: 2.0*  
+*Status: Production Ready*

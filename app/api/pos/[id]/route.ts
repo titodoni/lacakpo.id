@@ -24,6 +24,12 @@ export async function GET(
                 updater: { select: { name: true } },
               },
             },
+            issues: {
+              where: { status: 'open' },
+              include: {
+                creator: { select: { id: true, name: true, role: true } },
+              },
+            },
           },
         },
       },

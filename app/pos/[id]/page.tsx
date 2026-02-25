@@ -68,15 +68,12 @@ export default function PODetailPage() {
       const data = await res.json();
       setPo(data.po);
       
-      // Fetch issues for all items
+      // Issues are now included in the PO fetch - no N+1 queries
+      // Build issues map from the included data
       if (data.po.items) {
         const issuesMap: Record<string, Issue[]> = {};
         for (const item of data.po.items) {
-          const issuesRes = await fetch(`/api/items/${item.id}/issues`);
-          if (issuesRes.ok) {
-            const issuesData = await issuesRes.json();
-            issuesMap[item.id] = issuesData.issues;
-          }
+          issuesMap[item.id] = item.issues || [];
         }
         setItemIssues(issuesMap);
       }
@@ -322,6 +319,7 @@ export default function PODetailPage() {
   const isFinance = user.role === 'finance';
 
   // Merge PO data with issues for items
+  // Issues are now pre-fetched with the PO API call (no N+1 queries)
   const itemsWithIssues = po.items.map(item => ({
     ...item,
     purchaseOrder: {
@@ -334,7 +332,7 @@ export default function PODetailPage() {
       isVendorJob: po.isVendorJob,
       vendorName: po.vendorName,
     },
-    issues: itemIssues[item.id] || [],
+    issues: item.issues || itemIssues[item.id] || [],
   }));
 
   return (
