@@ -15,7 +15,7 @@
     "db:seed:demo": "tsx prisma/seed-demo-data.ts",
     "db:seed:new": "tsx prisma/seed-new-data.ts",
     "db:reset-passwords": "tsx prisma/reset-passwords.ts",
-    "vercel-build": "prisma generate && prisma migrate deploy && next build"
+    "vercel-build": "prisma generate && next build"
   },
   "dependencies": {
     "@libsql/client": "^0.17.0",
