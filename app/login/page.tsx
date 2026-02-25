@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronDown, Loader2, CheckCircle2 } from 'lucide-react';
+import { ChevronDown, Loader2, CheckCircle2, Trash2, AlertTriangle } from 'lucide-react';
 
 interface User {
   id: string;
@@ -34,6 +34,12 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
+  
+  // Reset dataset modal state
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetPassword, setResetPassword] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
+  const [resetMessage, setResetMessage] = useState('');
 
   useEffect(() => {
     fetchUsers();
@@ -84,6 +90,41 @@ export default function LoginPage() {
       setError('Terjadi kesalahan. Silakan coba lagi.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResetDataset = async () => {
+    if (!resetPassword.trim()) {
+      setResetMessage('Masukkan password konfirmasi');
+      return;
+    }
+
+    setIsResetting(true);
+    setResetMessage('');
+
+    try {
+      const res = await fetch('/api/admin/reset-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirmPassword: resetPassword }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setResetMessage('✅ Dataset berhasil direset!');
+        setResetPassword('');
+        setTimeout(() => {
+          setShowResetModal(false);
+          setResetMessage('');
+        }, 2000);
+      } else {
+        setResetMessage(data.error || 'Gagal mereset dataset');
+      }
+    } catch {
+      setResetMessage('Terjadi kesalahan saat reset');
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -203,7 +244,122 @@ export default function LoginPage() {
             </p>
           </div>
         </div>
+
+        {/* Reset Dataset Button */}
+        <div className="mt-4 text-center">
+          <button
+            onClick={() => setShowResetModal(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm 
+              text-destructive hover:bg-destructive/10 
+              rounded-lg transition-colors"
+          >
+            <Trash2 className="w-4 h-4" />
+            Reset Dataset PO
+          </button>
+          <p className="text-xs text-muted-foreground mt-1">
+            Hapus semua data PO untuk demo ulang
+          </p>
+        </div>
       </div>
+
+      {/* Reset Modal */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="w-full max-w-sm bg-card rounded-2xl p-6 border border-border shadow-lg">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-destructive" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">
+                  Reset Dataset
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Semua data PO akan dihapus
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+              <p className="text-sm text-amber-800">
+                <strong>Perhatian:</strong> Tindakan ini akan menghapus:
+              </p>
+              <ul className="text-sm text-amber-700 mt-1 ml-4 list-disc">
+                <li>Semua Purchase Orders</li>
+                <li>Semua Items</li>
+                <li>Semua Activity Logs</li>
+                <li>Semua Issues & Deliveries</li>
+              </ul>
+              <p className="text-sm text-amber-800 mt-2">
+                Data User tetap aman.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-1">
+                  Password Konfirmasi
+                </label>
+                <input
+                  type="password"
+                  value={resetPassword}
+                  onChange={(e) => setResetPassword(e.target.value)}
+                  placeholder="Masukkan 'resetdemo'"
+                  className="w-full h-10 px-3 rounded-lg border border-input 
+                    bg-white focus:ring-2 focus:ring-ring focus:border-transparent"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Password: <code className="bg-muted px-1 rounded">resetdemo</code>
+                </p>
+              </div>
+
+              {resetMessage && (
+                <div className={`p-3 rounded-lg text-sm ${
+                  resetMessage.startsWith('✅') 
+                    ? 'bg-green-50 text-green-700 border border-green-200'
+                    : 'bg-destructive/10 text-destructive'
+                }`}>
+                  {resetMessage}
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    setShowResetModal(false);
+                    setResetPassword('');
+                    setResetMessage('');
+                  }}
+                  className="flex-1 h-10 rounded-lg border border-border 
+                    bg-white text-foreground hover:bg-muted transition-colors"
+                  disabled={isResetting}
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleResetDataset}
+                  disabled={isResetting}
+                  className="flex-1 h-10 rounded-lg bg-destructive 
+                    text-destructive-foreground hover:bg-destructive/90 
+                    transition-colors flex items-center justify-center gap-2"
+                >
+                  {isResetting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Resetting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4" />
+                      Reset
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
