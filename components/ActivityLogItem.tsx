@@ -28,33 +28,33 @@ export function ActivityLogItem({ log }: ActivityLogItemProps) {
   const isDecrease = (log.delta || 0) < 0;
 
   return (
-    <div className="flex gap-3 p-3 rounded-xl hover:bg-zinc-50 transition-colors">
+    <div className="flex gap-3 p-3 rounded-xl hover:bg-muted transition-colors">
       {/* Status Dot */}
       <div className="flex-shrink-0 mt-1">
         <div className={`w-2 h-2 rounded-full ${
           log.newProgress === 100 ? 'bg-emerald-500' :
-          log.newProgress && log.newProgress > 0 ? 'bg-zinc-400' :
-          'bg-zinc-200'
+          log.newProgress && log.newProgress > 0 ? 'bg-muted-foreground/60' :
+          'bg-muted'
         }`} />
       </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs text-zinc-400">
+          <span className="text-xs text-muted-foreground">
             {new Date(log.createdAt).toLocaleTimeString('id-ID', {
               hour: '2-digit',
               minute: '2-digit',
             })}
           </span>
           <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-            departmentColors[log.department] || 'bg-zinc-100 text-zinc-600'
+            departmentColors[log.department] || 'bg-muted text-muted-foreground'
           }`}>
             {log.department}
           </span>
         </div>
 
-        <p className="text-sm text-zinc-700 mt-1">
+        <p className="text-sm text-foreground mt-1">
           <span className="font-medium">{log.actor?.name || 'Unknown'}</span>
            mengupdate 
           <span className="font-medium">{log.item?.itemName || 'Item'}</span>
@@ -62,15 +62,15 @@ export function ActivityLogItem({ log }: ActivityLogItemProps) {
 
         {/* Progress Change */}
         {log.oldProgress !== null && log.newProgress !== null && (
-          <p className="text-sm text-zinc-600 mt-1 flex items-center gap-2">
+          <p className="text-sm text-muted-foreground mt-1 flex items-center gap-2">
             <span className="font-mono">{log.oldProgress}%</span>
-            <span className="text-zinc-400">→</span>
+            <span className="text-muted-foreground">→</span>
             <span className="font-mono font-medium">{log.newProgress}%</span>
             {log.delta !== null && (
               <span className={`ml-2 text-xs font-medium ${
                 isIncrease ? 'text-emerald-600' :
                 isDecrease ? 'text-red-600' :
-                'text-zinc-500'
+                'text-muted-foreground'
               }`}>
                 {isIncrease ? '+' : ''}{log.delta}%
               </span>
@@ -80,7 +80,7 @@ export function ActivityLogItem({ log }: ActivityLogItemProps) {
 
         {/* User Note */}
         {log.userNote && (
-          <p className="text-sm text-zinc-500 mt-1 italic">
+          <p className="text-sm text-muted-foreground mt-1 italic">
             "{log.userNote}"
           </p>
         )}

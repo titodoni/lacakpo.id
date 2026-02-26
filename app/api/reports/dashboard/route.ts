@@ -4,13 +4,6 @@ import { requireAuth } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
-// Edge runtime for faster API responses
-export const runtime = 'edge';
-export const preferredRegion = 'iad1'; // US East (N. Virginia) - closest to SQLite/Turso
-
-// Cache for 30 seconds (stale-while-revalidate pattern)
-export const revalidate = 30;
-
 export async function GET() {
   const auth = await requireAuth();
   if (!auth) {

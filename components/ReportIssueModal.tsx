@@ -89,18 +89,18 @@ export function ReportIssueModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-hidden">
+      <div className="bg-card rounded-2xl w-full max-w-md max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-zinc-100">
+        <div className="flex items-center justify-between p-4 border-b border-border">
           <div>
-            <h2 className="text-lg font-bold text-zinc-900">
+            <h2 className="text-lg font-bold text-foreground">
               {isEditing ? 'Edit Masalah' : 'Laporkan Masalah'}
             </h2>
-            <p className="text-sm text-zinc-500 truncate">{itemName}</p>
+            <p className="text-sm text-muted-foreground truncate">{itemName}</p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-xl transition-colors"
+            className="p-2 text-muted-foreground hover:text-muted-foreground hover:bg-muted rounded-xl transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -110,7 +110,7 @@ export function ReportIssueModal({
         <form onSubmit={handleSubmit} className="p-4 space-y-4 overflow-y-auto max-h-[calc(90vh-80px)]">
           {/* Priority Selection */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-zinc-700">Tingkat Prioritas</label>
+            <label className="text-sm font-semibold text-foreground">Tingkat Prioritas</label>
             <div className="grid grid-cols-3 gap-2">
               {priorityOptions.map((option) => {
                 const Icon = option.icon;
@@ -124,12 +124,12 @@ export function ReportIssueModal({
                       'flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all',
                       isSelected
                         ? option.selectedColor
-                        : `bg-white ${option.color} hover:bg-zinc-50`
+                        : `bg-card ${option.color} hover:bg-muted/50`
                     )}
                   >
                     <Icon className="w-5 h-5" />
                     <span className="text-xs font-semibold">{option.label}</span>
-                    <span className={cn('text-[10px]', isSelected ? 'text-white/80' : 'text-zinc-500')}>
+                    <span className={cn('text-[10px]', isSelected ? 'text-white/80' : 'text-muted-foreground')}>
                       {option.description}
                     </span>
                   </button>
@@ -140,7 +140,7 @@ export function ReportIssueModal({
 
           {/* Title Input */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-zinc-700">
+            <label className="text-sm font-semibold text-foreground">
               Judul Masalah <span className="text-red-500">*</span>
             </label>
             <input
@@ -148,20 +148,20 @@ export function ReportIssueModal({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Contoh: Mesin CNC mati"
-              className="w-full h-12 px-4 rounded-xl border border-zinc-200 text-base focus:outline-none focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
+              className="w-full h-12 px-4 rounded-xl border border-border text-base focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
               required
             />
           </div>
 
           {/* Description Input */}
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-zinc-700">Keterangan (Opsional)</label>
+            <label className="text-sm font-semibold text-foreground">Keterangan (Opsional)</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Jelaskan detail masalah..."
               rows={3}
-              className="w-full p-4 rounded-xl border border-zinc-200 text-base resize-none focus:outline-none focus:border-zinc-900 focus:ring-2 focus:ring-zinc-900/10"
+              className="w-full p-4 rounded-xl border border-border text-base resize-none focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
             />
           </div>
 

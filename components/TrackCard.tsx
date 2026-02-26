@@ -36,8 +36,8 @@ export function TrackCard({ track, userRole, onUpdate }: TrackCardProps) {
     return (
       <div className="py-1">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-semibold text-zinc-800">{departmentLabels[track.department]}</span>
-          <span className={cn('text-lg font-bold font-mono', track.progress === 100 ? 'text-emerald-600' : 'text-zinc-700')}>{track.progress}%</span>
+          <span className="text-sm font-semibold text-foreground">{departmentLabels[track.department]}</span>
+          <span className={cn('text-lg font-bold font-mono', track.progress === 100 ? 'text-emerald-600' : 'text-foreground')}>{track.progress}%</span>
         </div>
         <SmartProgressInput trackId={track.id} department={track.department} currentValue={track.progress} onClose={() => setIsEditing(false)} onUpdate={onUpdate} />
       </div>
@@ -49,19 +49,19 @@ export function TrackCard({ track, userRole, onUpdate }: TrackCardProps) {
     <div 
       className={cn(
         'py-2 cursor-pointer transition-colors rounded-lg',
-        canEdit ? 'hover:bg-zinc-100 active:bg-zinc-200' : 'cursor-default'
+        canEdit ? 'hover:bg-muted active:bg-muted' : 'cursor-default'
       )} 
       onClick={() => canEdit && setIsEditing(true)}
     >
       <div className="flex items-center justify-between">
-        <span className="text-base font-semibold text-zinc-800">{departmentLabels[track.department]}</span>
-        <span className={cn('text-xl font-bold font-mono', isComplete ? 'text-emerald-600' : 'text-zinc-900')}>{track.progress}%</span>
+        <span className="text-base font-semibold text-foreground">{departmentLabels[track.department]}</span>
+        <span className={cn('text-xl font-bold font-mono', isComplete ? 'text-emerald-600' : 'text-foreground')}>{track.progress}%</span>
       </div>
-      <div className="mt-2 h-2 bg-zinc-200 rounded-full overflow-hidden">
+      <div className="mt-2 h-2 bg-muted rounded-full overflow-hidden">
         <div className={cn('h-full rounded-full transition-all', progressColor)} style={{ width: `${track.progress}%` }} />
       </div>
       {!canEdit && (
-        <p className="text-xs text-zinc-400 mt-1 text-right">Hanya baca</p>
+        <p className="text-xs text-muted-foreground mt-1 text-right">Hanya baca</p>
       )}
     </div>
   );

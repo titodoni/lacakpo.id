@@ -13,7 +13,7 @@ export function CompactProgressInput({ currentValue, onUpdate, onCancel }: Compa
   const [value, setValue] = useState(currentValue);
 
   return (
-    <div className="bg-zinc-50 rounded-lg p-3 mt-2">
+    <div className="bg-muted rounded-lg p-3 mt-2">
       {/* Slider */}
       <div className="flex items-center gap-3">
         <input
@@ -23,10 +23,10 @@ export function CompactProgressInput({ currentValue, onUpdate, onCancel }: Compa
           step="5"
           value={value}
           onChange={(e) => setValue(parseInt(e.target.value))}
-          className="flex-1 h-2 bg-zinc-300 rounded-full appearance-none cursor-pointer"
+          className="flex-1 h-2 bg-muted-foreground/40 rounded-full appearance-none cursor-pointer"
           style={{ background: `linear-gradient(to right, #18181b ${value}%, #d4d4d8 ${value}%)` }}
         />
-        <span className={cn('text-lg font-bold font-mono w-12 text-right', value === 100 ? 'text-emerald-600' : 'text-zinc-900')}>
+        <span className={cn('text-lg font-bold font-mono w-12 text-right', value === 100 ? 'text-emerald-600' : 'text-foreground')}>
           {value}%
         </span>
       </div>
@@ -40,8 +40,8 @@ export function CompactProgressInput({ currentValue, onUpdate, onCancel }: Compa
             className={cn(
               'flex-1 py-2 text-xs font-semibold rounded-lg transition-colors',
               value === q
-                ? 'bg-zinc-900 text-white'
-                : 'bg-white text-zinc-700 border border-zinc-200 hover:bg-zinc-100'
+                ? 'bg-foreground text-white'
+                : 'bg-white text-foreground border border-border hover:bg-muted'
             )}
           >
             {q}%
@@ -53,7 +53,7 @@ export function CompactProgressInput({ currentValue, onUpdate, onCancel }: Compa
       <div className="flex gap-2 mt-3">
         <button
           onClick={onCancel}
-          className="flex-1 py-2 text-xs font-medium text-zinc-600 hover:text-zinc-900 bg-white border border-zinc-200 rounded-lg hover:bg-zinc-100 transition-colors"
+          className="flex-1 py-2 text-xs font-medium text-muted-foreground hover:text-foreground bg-white border border-border rounded-lg hover:bg-muted transition-colors"
         >
           Batal
         </button>
@@ -63,8 +63,8 @@ export function CompactProgressInput({ currentValue, onUpdate, onCancel }: Compa
           className={cn(
             'flex-1 py-2 text-xs font-semibold rounded-lg transition-colors',
             value === currentValue
-              ? 'bg-zinc-300 text-zinc-500 cursor-not-allowed'
-              : 'bg-zinc-900 text-white hover:bg-zinc-800'
+              ? 'bg-muted-foreground/40 text-muted-foreground cursor-not-allowed'
+              : 'bg-foreground text-white hover:bg-foreground/90'
           )}
         >
           Update

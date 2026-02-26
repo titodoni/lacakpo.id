@@ -8,10 +8,10 @@ export function cn(...inputs: ClassValue[]) {
 // Progress color mapping based on percentage
 export function getProgressColor(progress: number): string {
   if (progress === 100) return 'bg-emerald-500';
-  if (progress >= 76) return 'bg-zinc-600';
-  if (progress >= 51) return 'bg-zinc-500';
-  if (progress >= 26) return 'bg-zinc-400';
-  return 'bg-zinc-300';
+  if (progress >= 76) return 'bg-muted-foreground';
+  if (progress >= 51) return 'bg-muted-foreground/80';
+  if (progress >= 26) return 'bg-muted-foreground/60';
+  return 'bg-muted-foreground/40';
 }
 
 // Format date for display

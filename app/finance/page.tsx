@@ -198,7 +198,7 @@ export default function FinancePage() {
   if (userLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-zinc-500">Memuat...</p>
+        <p className="text-muted-foreground">Memuat...</p>
       </div>
     );
   }
@@ -221,47 +221,70 @@ export default function FinancePage() {
       <div className="space-y-6 max-w-5xl mx-auto">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900">Tampilan Keuangan</h1>
-          <p className="text-zinc-500 mt-1">
+          <h1 className="text-2xl font-bold text-foreground">Tampilan Keuangan</h1>
+          <p className="text-muted-foreground mt-1">
             Tracking invoice dan pembayaran PO
           </p>
         </div>
 
-        {/* Month Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-2">
-          {['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'].map((monthNum, idx) => {
+        {/* Month Navigation */}
+        <div className="flex items-center justify-between gap-2">
+          {(() => {
             const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'];
-            const year = parseInt(currentMonth.split('-')[0]);
-            const monthKey = `${year}-${monthNum}`;
-            const isActive = currentMonth === monthKey;
+            const [year, month] = currentMonth.split('-').map(Number);
+            
+            const prevMonthDate = new Date(year, month - 2, 1);
+            const prevMonthKey = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, '0')}`;
+            const prevMonthName = monthNames[prevMonthDate.getMonth()];
+            
+            const nextMonthDate = new Date(year, month, 1);
+            const nextMonthKey = `${nextMonthDate.getFullYear()}-${String(nextMonthDate.getMonth() + 1).padStart(2, '0')}`;
+            const nextMonthName = monthNames[nextMonthDate.getMonth()];
+            
+            const currentMonthName = monthNames[month - 1];
             
             return (
-              <button
-                key={monthNum}
-                onClick={() => setCurrentMonth(monthKey)}
-                className={cn(
-                  'px-4 py-2 rounded-xl text-sm font-medium transition-colors whitespace-nowrap',
-                  isActive
-                    ? 'bg-zinc-900 text-white'
-                    : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
-                )}
-              >
-                {monthNames[idx]}
-              </button>
+              <>
+                <button
+                  onClick={() => setCurrentMonth(prevMonthKey)}
+                  className="flex items-center gap-1 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors bg-muted text-muted-foreground hover:bg-muted/80"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  <span className="hidden sm:inline">{prevMonthName}</span>
+                </button>
+                
+                <div className="flex-1 text-center">
+                  <span className="text-lg font-bold text-foreground">
+                    {currentMonthName} {year}
+                  </span>
+                </div>
+                
+                <button
+                  onClick={() => setCurrentMonth(nextMonthKey)}
+                  className="flex items-center gap-1 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors bg-muted text-muted-foreground hover:bg-muted/80"
+                >
+                  <span className="hidden sm:inline">{nextMonthName}</span>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </>
             );
-          })}
+          })()}
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-2xl p-5 border border-zinc-200">
+          <div className="bg-white rounded-2xl p-5 border border-border">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-zinc-100 rounded-lg">
-                <Package className="w-5 h-5 text-zinc-600" />
+              <div className="p-2 bg-muted rounded-lg">
+                <Package className="w-5 h-5 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-2xl font-bold text-zinc-900">{stats.total}</p>
-                <p className="text-sm text-zinc-500">Total PO</p>
+                <p className="text-2xl font-bold text-foreground">{stats.total}</p>
+                <p className="text-sm text-muted-foreground">Total PO</p>
               </div>
             </div>
           </div>
@@ -273,7 +296,7 @@ export default function FinancePage() {
               </div>
               <div>
                 <p className="text-2xl font-bold text-amber-700">{stats.uninvoiced}</p>
-                <p className="text-sm text-amber-600">Belum Invoice</p>
+                <p className="text-sm text-amber-600">Invoice dikirim</p>
               </div>
             </div>
           </div>
@@ -312,14 +335,14 @@ export default function FinancePage() {
               className={cn(
                 'px-4 py-2 rounded-xl text-sm font-medium transition-colors whitespace-nowrap',
                 filter === f
-                  ? 'bg-zinc-900 text-white'
-                  : 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200'
+                  ? 'bg-foreground text-white'
+                  : 'bg-muted text-muted-foreground hover:bg-muted'
               )}
             >
-              {f === 'all' ? 'Semua PO' : f === 'uninvoiced' ? 'Belum Invoice' : f === 'invoiced' ? 'Menunggu Bayar' : 'Sudah Lunas'}
+              {f === 'all' ? 'Semua PO' : f === 'uninvoiced' ? 'Belum Invoice' : f === 'invoiced' ? 'Invoice dikirim' : 'Sudah Lunas'}
               <span className={cn(
                 'ml-2 px-1.5 py-0.5 rounded text-xs',
-                filter === f ? 'bg-zinc-700 text-white' : 'bg-zinc-200 text-zinc-600'
+                filter === f ? 'bg-muted-foreground text-white' : 'bg-muted text-muted-foreground'
               )}>
                 {f === 'all' ? stats.total : f === 'uninvoiced' ? stats.uninvoiced : f === 'invoiced' ? stats.invoiced : stats.paid}
               </span>
@@ -329,15 +352,15 @@ export default function FinancePage() {
 
         {/* PO List */}
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-zinc-900">
+          <h2 className="text-lg font-semibold text-foreground">
             Purchase Orders ({sortedPOs.length})
           </h2>
           
           {sortedPOs.length === 0 ? (
-            <div className="bg-white rounded-2xl p-12 border border-zinc-200 text-center">
-              <DollarSign className="w-12 h-12 text-zinc-300 mx-auto mb-4" />
-              <p className="text-zinc-500">Tidak ada PO ditemukan.</p>
-              <p className="text-sm text-zinc-400 mt-2">
+            <div className="bg-white rounded-2xl p-12 border border-border text-center">
+              <DollarSign className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+              <p className="text-muted-foreground">Tidak ada PO ditemukan.</p>
+              <p className="text-sm text-muted-foreground mt-2">
                 Tidak ada PO dengan filter yang dipilih untuk bulan ini.
               </p>
             </div>
@@ -350,12 +373,12 @@ export default function FinancePage() {
                 return (
                   <div
                     key={po.id}
-                    className="bg-white rounded-2xl p-5 border border-zinc-200"
+                    className="bg-white rounded-2xl p-5 border border-border"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-semibold text-zinc-900">{po.poNumber}</h3>
+                          <h3 className="font-semibold text-foreground">{po.poNumber}</h3>
                           {po.isUrgent && (
                             <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-red-100 text-red-700">
                               PENTING
@@ -368,22 +391,22 @@ export default function FinancePage() {
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-zinc-600 mt-1">{po.client.name}</p>
-                        <p className="text-xs text-zinc-400 mt-1">
+                        <p className="text-sm text-muted-foreground mt-1">{po.client.name}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
                           PO Date: {new Date(po.poDate).toLocaleDateString('id-ID')}
                         </p>
                       </div>
                     </div>
                     
                     {/* Finance Status Actions */}
-                    <div className="mt-4 pt-4 border-t border-zinc-100">
+                    <div className="mt-4 pt-4 border-t border-border">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Invoice Checkbox */}
                         <div className={cn(
                           'p-3 rounded-xl border-2 transition-all',
                           po.isInvoiced 
                             ? 'bg-emerald-50 border-emerald-200' 
-                            : 'bg-zinc-50 border-zinc-200'
+                            : 'bg-muted/50 border-border'
                         )}>
                           <div className="flex items-center gap-3">
                             <button
@@ -397,7 +420,7 @@ export default function FinancePage() {
                                 'w-6 h-6 rounded border-2 flex items-center justify-center transition-colors',
                                 po.isInvoiced
                                   ? 'bg-emerald-500 border-emerald-500'
-                                  : 'bg-white border-zinc-300 hover:border-emerald-400'
+                                  : 'bg-white border-border hover:border-emerald-400'
                               )}
                             >
                               {po.isInvoiced && <CheckCircle2 className="w-4 h-4 text-white" />}
@@ -405,12 +428,12 @@ export default function FinancePage() {
                             <div className="flex-1">
                               <p className={cn(
                                 'font-medium',
-                                po.isInvoiced ? 'text-emerald-700' : 'text-zinc-700'
+                                po.isInvoiced ? 'text-emerald-700' : 'text-foreground'
                               )}>
-                                {po.isInvoiced ? 'Sudah Di-invoice' : 'Belum Di-invoice'}
+                                {po.isInvoiced ? 'Invoice dikirim' : 'Belum Di-invoice'}
                               </p>
                               {po.isInvoiced && po.invoiceNumber && (
-                                <p className="text-xs text-zinc-500">No: {po.invoiceNumber}</p>
+                                <p className="text-xs text-muted-foreground">No: {po.invoiceNumber}</p>
                               )}
                             </div>
                           </div>
@@ -429,7 +452,7 @@ export default function FinancePage() {
                           'p-3 rounded-xl border-2 transition-all',
                           po.isPaid 
                             ? 'bg-emerald-50 border-emerald-200' 
-                            : 'bg-zinc-50 border-zinc-200'
+                            : 'bg-muted/50 border-border'
                         )}>
                           <div className="flex items-center gap-3">
                             <button
@@ -442,7 +465,7 @@ export default function FinancePage() {
                                 'w-6 h-6 rounded border-2 flex items-center justify-center transition-colors',
                                 po.isPaid
                                   ? 'bg-emerald-500 border-emerald-500'
-                                  : 'bg-white border-zinc-300 hover:border-emerald-400'
+                                  : 'bg-white border-border hover:border-emerald-400'
                               )}
                             >
                               {po.isPaid && <CheckCircle2 className="w-4 h-4 text-white" />}
@@ -450,7 +473,7 @@ export default function FinancePage() {
                             <div className="flex-1">
                               <p className={cn(
                                 'font-medium',
-                                po.isPaid ? 'text-emerald-700' : 'text-zinc-700'
+                                po.isPaid ? 'text-emerald-700' : 'text-foreground'
                               )}>
                                 {po.isPaid ? 'Sudah Dibayar' : 'Belum Dibayar'}
                               </p>
@@ -458,7 +481,7 @@ export default function FinancePage() {
                           </div>
                           
                           {isUpdating && updateType === 'paid' && updatingId === po.id && (
-                            <div className="mt-2 flex items-center gap-2 text-sm text-zinc-500">
+                            <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
                               <Loader2 className="w-4 h-4 animate-spin" />
                               Updating...
                             </div>
@@ -469,8 +492,8 @@ export default function FinancePage() {
                     
                     {/* Invoice Number Display */}
                     {po.isInvoiced && po.invoiceNumber && (
-                      <div className="mt-3 pt-3 border-t border-zinc-100">
-                        <p className="text-sm text-zinc-600">
+                      <div className="mt-3 pt-3 border-t border-border">
+                        <p className="text-sm text-muted-foreground">
                           Invoice: <span className="font-medium">{po.invoiceNumber}</span>
                         </p>
                       </div>

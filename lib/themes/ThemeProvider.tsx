@@ -43,18 +43,17 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     name: theme.name,
   }));
 
-  // Prevent flash of unstyled content
-  if (!mounted) {
-    return (
-      <div style={{ visibility: 'hidden' }}>
-        {children}
-      </div>
-    );
-  }
+  // Prevent flash of unstyled content - always provide context even before mount
+  // Use the default theme as fallback during SSR/hydration
+  const contextValue = mounted 
+    ? { theme, setTheme, availableThemes }
+    : { theme: DEFAULT_THEME, setTheme, availableThemes };
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, availableThemes }}>
-      {children}
+    <ThemeContext.Provider value={contextValue}>
+      <div style={{ visibility: mounted ? 'visible' : 'hidden' }}>
+        {children}
+      </div>
     </ThemeContext.Provider>
   );
 }

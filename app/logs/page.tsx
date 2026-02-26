@@ -59,7 +59,7 @@ export default function LogsPage() {
   if (userLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-zinc-500">Memuat...</p>
+        <p className="text-muted-foreground">Memuat...</p>
       </div>
     );
   }
@@ -104,8 +104,8 @@ export default function LogsPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-zinc-900">Riwayat Aktivitas</h1>
-            <p className="text-zinc-500 mt-1">
+            <h1 className="text-2xl font-bold text-foreground">Riwayat Aktivitas</h1>
+            <p className="text-muted-foreground mt-1">
               Lacak semua update progress di seluruh departemen
             </p>
           </div>
@@ -114,7 +114,7 @@ export default function LogsPage() {
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="h-11 px-4 rounded-xl border border-zinc-300 focus:border-zinc-900 focus:outline-none bg-white"
+            className="h-11 px-4 rounded-xl border border-border focus:border-primary focus:outline-none bg-card"
           >
             {departments.map((dept) => (
               <option key={dept.value} value={dept.value}>
@@ -126,9 +126,9 @@ export default function LogsPage() {
 
         {/* Stats Summary */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-white rounded-2xl p-4 border border-zinc-200">
-            <p className="text-2xl font-bold text-zinc-900">{logs.length}</p>
-            <p className="text-sm text-zinc-500">Total Update</p>
+          <div className="bg-card rounded-2xl p-4 border border-border">
+            <p className="text-2xl font-bold text-foreground">{logs.length}</p>
+            <p className="text-sm text-muted-foreground">Total Update</p>
           </div>
           <div className="bg-blue-50 rounded-2xl p-4 border border-blue-100">
             <p className="text-2xl font-bold text-blue-700">
@@ -151,11 +151,11 @@ export default function LogsPage() {
         </div>
 
         {/* Activity Timeline */}
-        <div className="bg-white rounded-2xl border border-zinc-200">
+        <div className="bg-card rounded-2xl border border-border">
           {logs.length === 0 ? (
             <div className="p-12 text-center">
-              <p className="text-zinc-500">Tidak ada riwayat aktivitas.</p>
-              <p className="text-sm text-zinc-400 mt-2">
+              <p className="text-muted-foreground">Tidak ada riwayat aktivitas.</p>
+              <p className="text-sm text-muted-foreground mt-2">
                 Update progress akan muncul otomatis di sini.
               </p>
             </div>
@@ -163,7 +163,7 @@ export default function LogsPage() {
             <div className="divide-y divide-zinc-100">
               {Object.entries(groupedLogs).map(([date, dateLogs]) => (
                 <div key={date} className="p-6">
-                  <h3 className="text-sm font-semibold text-zinc-500 mb-4 sticky top-0 bg-white py-2">
+                  <h3 className="text-sm font-semibold text-muted-foreground mb-4 sticky top-0 bg-card py-2">
                     {date}
                   </h3>
                   <div className="space-y-2">

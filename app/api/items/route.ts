@@ -68,10 +68,8 @@ export async function GET(req: NextRequest) {
         },
         issues: {
           where: { status: 'open' },
-          select: {
-            id: true,
-            priority: true,
-            status: true,
+          include: {
+            creator: { select: { id: true, name: true, role: true } },
           },
         },
       },

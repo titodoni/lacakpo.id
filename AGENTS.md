@@ -1,14 +1,14 @@
-# PO Tracker (KreasiLog / lacakPO.id) - AGENTS.md
+# PO Tracker (lacakPO.id) - AGENTS.md
 
 > **Project Status**: Production Ready  
 > **Language**: Indonesian (UI) + English (Code/Documentation)  
-> **Last Updated**: 2026-02-25
+> **Last Updated**: 2026-02-26
 
 ---
 
 ## 1. Project Overview
 
-**PO Tracker** (also referred to as **KreasiLog** or **lacakPO.id**) is a **Concurrent Multi-Department Manufacturing Progress Tracking System**. It enables multiple departments to track progress on the same Purchase Order (PO) items simultaneously without workflow locks or blocking.
+**lacakPO.id** is a **Concurrent Multi-Department Manufacturing Progress Tracking System**. It enables multiple departments to track progress on the same Purchase Order (PO) items simultaneously without workflow locks or blocking.
 
 ### Key Differentiators
 - **No Workflow Lock**: All departments can update progress anytime, no required sequence
@@ -48,7 +48,6 @@ No blocking between departments
 | **State Management** | Zustand + React Query (TanStack Query) | 5.0.11 / 5.90.21 |
 | **Icons** | Lucide React | 0.575.0 |
 | **Password Hashing** | bcryptjs | 3.0.3 |
-| **Build Tool** | Next.js Built-in | - |
 
 ### Performance Targets
 - First load: < 2s (4G)
@@ -740,5 +739,5 @@ npm run db:reset-passwords
 
 ---
 
-*Document Version: 2.0*  
+*Document Version: 2.1*  
 *Status: Production Ready*

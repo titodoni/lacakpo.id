@@ -32,7 +32,7 @@ export function IssueBadge({ issues, compact = true }: IssueBadgeProps) {
   if (compact) {
     return (
       <span
-        className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold text-white"
+        className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold text-primary-foreground"
         style={{
           backgroundColor: hasHigh ? colors.emerald : colors.shamrock,
         }}

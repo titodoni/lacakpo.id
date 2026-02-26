@@ -1,11 +1,12 @@
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { getSession } from '@/lib/auth';
 import DashboardLayout from '@/components/DashboardLayout';
 import { prisma } from '@/lib/prisma';
 
 // Calculate delivery status
 function getDeliveryStatus(poDate: Date, deliveryDeadline: Date | null) {
-  if (!deliveryDeadline) return { status: 'no-deadline', label: 'Tanpa Deadline', color: 'bg-zinc-100 text-zinc-600' };
+  if (!deliveryDeadline) return { status: 'no-deadline', label: 'Tanpa Deadline', color: 'bg-muted text-muted-foreground' };
   
   const now = new Date();
   const deadline = new Date(deliveryDeadline);
@@ -121,18 +122,19 @@ export default async function POsPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-zinc-900">Daftar Purchase Order</h1>
-            <p className="text-sm text-zinc-500 mt-1">
+            <h1 className="text-2xl font-bold text-foreground">Daftar Purchase Order</h1>
+            <p className="text-sm text-muted-foreground mt-1">
                       Menampilkan {sortedPOs.length} pesanan • Item diurutkan berdasarkan deadline
             </p>
           </div>
           {(['sales_admin', 'super_admin'] as string[]).includes(session.role) && (
-            <a
+            <Link
               href="/pos/new"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-zinc-900 text-white rounded-xl text-sm font-medium hover:bg-zinc-800 transition-colors"
+              prefetch={true}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-foreground text-white rounded-xl text-sm font-medium hover:bg-foreground/90 transition-colors"
             >
               + PO Baru
-            </a>
+            </Link>
           )}
         </div>
 
@@ -146,14 +148,15 @@ export default async function POsPage() {
         </div>
 
         {sortedPOs.length === 0 ? (
-          <div className="bg-white rounded-2xl p-12 border border-zinc-200 text-center">
-            <p className="text-zinc-500">Belum ada purchase order.</p>
-            <a
+          <div className="bg-card rounded-2xl p-12 border border-border text-center">
+            <p className="text-muted-foreground">Belum ada purchase order.</p>
+            <Link
               href="/pos/new"
-              className="inline-block mt-4 text-zinc-900 font-medium hover:underline"
+              prefetch={true}
+              className="inline-block mt-4 text-foreground font-medium hover:underline"
             >
               Buat PO pertama
-            </a>
+            </Link>
           </div>
         ) : (
           <div className="grid gap-4">
@@ -166,17 +169,17 @@ export default async function POsPage() {
                 <a
                   key={po.id}
                   href={`/pos/${po.id}`}
-                  className="block bg-white rounded-2xl p-5 border border-zinc-200 hover:border-zinc-400 transition-all hover:shadow-sm"
+                  className="block bg-card rounded-2xl p-5 border border-border hover:border-border transition-all hover:shadow-sm"
                 >
                   <div className="flex items-start justify-between gap-4">
                     {/* Left: Item Info (Main Focus) */}
                     <div className="flex-1 min-w-0">
                       {/* Item Name - Highlighted */}
                       <div className="flex items-center gap-2">
-                        <h3 className="font-bold text-lg text-zinc-900 truncate">
+                        <h3 className="font-bold text-lg text-foreground truncate">
                           {firstItem?.itemName || 'Item Tanpa Nama'}
                           {itemCount > 1 && (
-                            <span className="text-sm font-normal text-zinc-500 ml-2">
+                            <span className="text-sm font-normal text-muted-foreground ml-2">
                               +{itemCount - 1} lainnya
                             </span>
                           )}
@@ -190,14 +193,14 @@ export default async function POsPage() {
                       
                       {/* Quantity */}
                       {firstItem && (
-                        <p className="text-sm text-zinc-600 mt-1">
+                        <p className="text-sm text-muted-foreground mt-1">
                           {firstItem.quantityTotal} {firstItem.quantityUnit}
                         </p>
                       )}
                       
                       {/* PO & Client Info - Secondary */}
-                      <div className="flex items-center gap-2 mt-2 text-sm text-zinc-500">
-                        <span className="font-mono text-xs bg-zinc-100 px-2 py-0.5 rounded">
+                      <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+                        <span className="font-mono text-xs bg-muted px-2 py-0.5 rounded">
                           {po.poNumber}
                         </span>
                         <span>•</span>
@@ -214,20 +217,20 @@ export default async function POsPage() {
                             );
                             return (
                               <div className="flex items-center gap-2">
-                                <div className="w-20 h-2.5 bg-zinc-200 rounded-full overflow-hidden">
+                                <div className="w-20 h-2.5 bg-muted rounded-full overflow-hidden">
                                   <div 
                                     className={`h-full rounded-full transition-all ${
                                       avgProgress === 100 ? 'bg-emerald-500' :
-                                      avgProgress >= 75 ? 'bg-zinc-600' :
-                                      avgProgress >= 50 ? 'bg-zinc-500' :
-                                      avgProgress >= 25 ? 'bg-zinc-400' :
-                                      'bg-zinc-300'
+                                      avgProgress >= 75 ? 'bg-muted-foreground' :
+                                      avgProgress >= 50 ? 'bg-muted-foreground/80' :
+                                      avgProgress >= 25 ? 'bg-muted-foreground/60' :
+                                      'bg-muted'
                                     }`}
                                     style={{ width: `${avgProgress}%` }}
                                   />
                                 </div>
                                 <span className={`text-sm font-bold font-mono ${
-                                  avgProgress === 100 ? 'text-emerald-600' : 'text-zinc-700'
+                                  avgProgress === 100 ? 'text-emerald-600' : 'text-foreground'
                                 }`}>
                                   {avgProgress}%
                                 </span>
@@ -242,15 +245,15 @@ export default async function POsPage() {
                                 <div 
                                   className={`w-2 h-2 rounded-full ${
                                     track.progress === 100 ? 'bg-emerald-500' :
-                                    track.progress >= 50 ? 'bg-zinc-500' :
-                                    track.progress > 0 ? 'bg-zinc-300' :
-                                    'bg-zinc-200'
+                                    track.progress >= 50 ? 'bg-muted-foreground/80' :
+                                    track.progress > 0 ? 'bg-muted' :
+                                    'bg-muted'
                                   }`}
                                 />
-                                <span className="text-xs text-zinc-400 capitalize">
+                                <span className="text-xs text-muted-foreground capitalize">
                                   {track.department.slice(0, 3)}
                                 </span>
-                                <span className="text-xs text-zinc-500 font-mono">
+                                <span className="text-xs text-muted-foreground font-mono">
                                   {track.progress}%
                                 </span>
                               </div>
@@ -269,7 +272,7 @@ export default async function POsPage() {
                       
                       {/* Delivery Date */}
                       {po.deliveryDeadline && (
-                        <p className="text-xs text-zinc-500">
+                        <p className="text-xs text-muted-foreground">
                           Jatuh tempo: {new Date(po.deliveryDeadline).toLocaleDateString('id-ID', {
                             day: '2-digit',
                             month: 'short',
@@ -283,7 +286,7 @@ export default async function POsPage() {
                         po.status === 'active'
                           ? 'bg-emerald-50 text-emerald-600'
                           : po.status === 'completed'
-                          ? 'bg-zinc-100 text-zinc-600'
+                          ? 'bg-muted text-muted-foreground'
                           : 'bg-red-50 text-red-600'
                       }`}>
                         {po.status}

@@ -260,14 +260,14 @@ export default function IssuesPage() {
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Search & Filter */}
         <div 
           className="p-4 rounded-2xl border"
           style={{ backgroundColor: 'white', borderColor: colors.paleSky }}
         >
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col gap-4">
             {/* Search */}
-            <div className="flex-1 relative">
+            <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5" style={{ color: colors.skyReflection }} />
               <input
                 type="text"
@@ -282,40 +282,54 @@ export default function IssuesPage() {
               />
             </div>
             
-            {/* Status Filter */}
-            <div className="flex rounded-xl p-1" style={{ backgroundColor: colors.paleSky }}>
-              {(['all', 'open', 'resolved'] as const).map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  className="px-4 py-2 rounded-lg text-sm font-medium transition-all capitalize"
-                  style={{
-                    backgroundColor: filter === f ? 'white' : 'transparent',
-                    color: filter === f ? colors.black : colors.gunmetal,
-                    boxShadow: filter === f ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                  }}
-                >
-                  {f === 'all' ? 'Semua' : f === 'open' ? 'Terbuka' : 'Selesai'}
-                </button>
-              ))}
-            </div>
-            
-            {/* Priority Filter */}
-            <div className="flex rounded-xl p-1" style={{ backgroundColor: colors.paleSky }}>
-              {(['all', 'high', 'medium', 'low'] as const).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPriorityFilter(p)}
-                  className="px-3 py-2 rounded-lg text-sm font-medium transition-all capitalize"
-                  style={{
-                    backgroundColor: priorityFilter === p ? 'white' : 'transparent',
-                    color: priorityFilter === p ? colors.black : colors.gunmetal,
-                    boxShadow: priorityFilter === p ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
-                  }}
-                >
-                  {p === 'all' ? 'Semua' : p === 'high' ? 'Tinggi' : p === 'medium' ? 'Sedang' : 'Rendah'}
-                </button>
-              ))}
+            {/* Combined Status & Priority Filter - Essential tabs only */}
+            <div className="flex rounded-xl p-1 overflow-x-auto" style={{ backgroundColor: colors.paleSky }}>
+              {[
+                { key: 'all', label: 'Semua' },
+                { key: 'open', label: 'Terbuka' },
+                { key: 'high', label: 'Prioritas Tinggi' },
+                { key: 'resolved', label: 'Selesai' },
+              ].map((tab) => {
+                const isActive = filter === tab.key || priorityFilter === tab.key;
+                const isMixed = tab.key === 'high';
+                return (
+                  <button
+                    key={tab.key}
+                    onClick={() => {
+                      if (tab.key === 'all') {
+                        setFilter('all');
+                        setPriorityFilter('all');
+                      } else if (tab.key === 'high') {
+                        setFilter('open');
+                        setPriorityFilter('high');
+                      } else {
+                        setFilter(tab.key as 'open' | 'resolved');
+                        setPriorityFilter('all');
+                      }
+                    }}
+                    className="px-4 py-2 rounded-lg text-sm font-medium transition-all capitalize whitespace-nowrap"
+                    style={{
+                      backgroundColor: (tab.key === 'all' && filter === 'all' && priorityFilter === 'all') ||
+                                       (tab.key === 'open' && filter === 'open' && priorityFilter === 'all') ||
+                                       (tab.key === 'high' && filter === 'open' && priorityFilter === 'high') ||
+                                       (tab.key === 'resolved' && filter === 'resolved' && priorityFilter === 'all')
+                        ? 'white' : 'transparent',
+                      color: (tab.key === 'all' && filter === 'all' && priorityFilter === 'all') ||
+                             (tab.key === 'open' && filter === 'open' && priorityFilter === 'all') ||
+                             (tab.key === 'high' && filter === 'open' && priorityFilter === 'high') ||
+                             (tab.key === 'resolved' && filter === 'resolved' && priorityFilter === 'all')
+                        ? colors.black : colors.gunmetal,
+                      boxShadow: (tab.key === 'all' && filter === 'all' && priorityFilter === 'all') ||
+                                (tab.key === 'open' && filter === 'open' && priorityFilter === 'all') ||
+                                (tab.key === 'high' && filter === 'open' && priorityFilter === 'high') ||
+                                (tab.key === 'resolved' && filter === 'resolved' && priorityFilter === 'all')
+                        ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                    }}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

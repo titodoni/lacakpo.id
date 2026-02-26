@@ -4,21 +4,21 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🔑 Resetting all passwords to "demo"...\n');
+  console.log('🔑 Resetting all PINs to "12345"...\n');
 
-  const defaultPassword = await bcrypt.hash('demo', 10);
+  const defaultPin = await bcrypt.hash('12345', 10);
 
   // Update all users password
   const result = await prisma.user.updateMany({
     data: {
-      passwordHash: defaultPassword,
+      passwordHash: defaultPin,
     },
   });
 
   console.log(`✅ Updated ${result.count} users`);
   console.log('\n📋 New credentials:');
   console.log('   Username: (any user)');
-  console.log('   Password: demo');
+  console.log('   PIN: 12345');
 }
 
 main()

@@ -67,7 +67,7 @@ export function IssueList({
         key={issue.id}
         className={cn(
           'border rounded-xl overflow-hidden transition-all',
-          isResolved ? 'bg-zinc-50 border-zinc-200 opacity-75' : 'bg-white border-zinc-200'
+          isResolved ? 'bg-muted/50 border-border opacity-75' : 'bg-card border-border'
         )}
       >
         {/* Header */}
@@ -79,7 +79,7 @@ export function IssueList({
             <div className="flex items-start gap-2 flex-1 min-w-0">
               <Icon className={cn('w-4 h-4 mt-0.5 shrink-0', config.color.split(' ')[1])} />
               <div className="flex-1 min-w-0">
-                <p className={cn('font-medium text-sm', isResolved && 'line-through text-zinc-500')}>
+                <p className={cn('font-medium text-sm', isResolved && 'line-through text-muted-foreground')}>
                   {issue.title}
                 </p>
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
@@ -91,7 +91,7 @@ export function IssueList({
                       Selesai
                     </span>
                   )}
-                  <span className="text-xs text-zinc-500">
+                  <span className="text-xs text-muted-foreground">
                     {formatDistanceToNow(issue.createdAt)}
                   </span>
                 </div>
@@ -107,7 +107,7 @@ export function IssueList({
                       e.stopPropagation();
                       onEdit(issue);
                     }}
-                    className="p-1.5 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 rounded-lg transition-colors"
+                    className="p-1.5 text-muted-foreground hover:text-muted-foreground hover:bg-muted rounded-lg transition-colors"
                     title="Edit"
                   >
                     <Edit2 className="w-3.5 h-3.5" />
@@ -117,7 +117,7 @@ export function IssueList({
                       e.stopPropagation();
                       onDelete(issue.id);
                     }}
-                    className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                     title="Hapus"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -130,7 +130,7 @@ export function IssueList({
                     e.stopPropagation();
                     onReopen(issue.id);
                   }}
-                  className="text-xs px-2 py-1 bg-zinc-200 text-zinc-700 rounded-lg hover:bg-zinc-300 transition-colors"
+                  className="text-xs px-2 py-1 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors"
                 >
                   Buka Kembali
                 </button>
@@ -141,13 +141,13 @@ export function IssueList({
 
         {/* Expanded Details */}
         {isExpanded && (
-          <div className="px-3 pb-3 pt-0 border-t border-zinc-100">
+          <div className="px-3 pb-3 pt-0 border-t border-border">
             {issue.description && (
-              <p className="text-sm text-zinc-600 mt-2">{issue.description}</p>
+              <p className="text-sm text-muted-foreground mt-2">{issue.description}</p>
             )}
 
             {/* Creator Info */}
-            <div className="flex items-center gap-2 mt-3 text-xs text-zinc-500">
+            <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
               <User className="w-3 h-3" />
               <span>Dilaporkan oleh {issue.creator.name}</span>
             </div>
@@ -158,7 +158,7 @@ export function IssueList({
                 <CheckCircle2 className="w-3 h-3" />
                 <span>Diselesaikan oleh {issue.resolver.name}</span>
                 {issue.resolvedAt && (
-                  <span className="text-zinc-400">
+                  <span className="text-muted-foreground">
                     ({formatDistanceToNow(issue.resolvedAt)})
                   </span>
                 )}
@@ -182,7 +182,7 @@ export function IssueList({
 
   if (issues.length === 0) {
     return (
-      <div className="text-center py-6 text-zinc-400 text-sm">
+      <div className="text-center py-6 text-muted-foreground text-sm">
         Tidak ada masalah dilaporkan
       </div>
     );
@@ -192,7 +192,7 @@ export function IssueList({
     <div className="space-y-2">
       {openIssues.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-xs font-semibold text-zinc-500 uppercase tracking-wide">
+          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             Masalah Terbuka ({openIssues.length})
           </h4>
           {openIssues.map(renderIssue)}
@@ -200,8 +200,8 @@ export function IssueList({
       )}
 
       {resolvedIssues.length > 0 && (
-        <div className="space-y-2 pt-2 border-t border-zinc-200">
-          <h4 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">
+        <div className="space-y-2 pt-2 border-t border-border">
+          <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             Selesai ({resolvedIssues.length})
           </h4>
           {resolvedIssues.map(renderIssue)}

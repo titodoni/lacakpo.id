@@ -130,7 +130,7 @@ export default async function ReportsPage() {
   return (
     <DashboardLayout user={userData}>
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold text-zinc-900">Dashboard Laporan</h1>
+        <h1 className="text-2xl font-bold text-foreground">Dashboard Laporan</h1>
 
         <Suspense fallback={<ReportsDashboardSkeleton />}>
           <ReportsDashboard initialData={reportData} />

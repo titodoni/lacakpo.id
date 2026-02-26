@@ -210,8 +210,8 @@ export default function AdminUsersPage() {
 
   if (isAuthorized === null || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-50">
-        <p className="text-zinc-500">Memuat...</p>
+      <div className="min-h-screen flex items-center justify-center bg-muted">
+        <p className="text-muted-foreground">Memuat...</p>
       </div>
     );
   }
@@ -220,17 +220,17 @@ export default function AdminUsersPage() {
     if (role === 'super_admin') return 'bg-red-100 text-red-700';
     if (role === 'manager') return 'bg-purple-100 text-purple-700';
     if (role === 'sales_admin') return 'bg-blue-100 text-blue-700';
-    return 'bg-zinc-100 text-zinc-700';
+    return 'bg-muted text-foreground';
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 lg:ml-64">
+    <div className="min-h-screen bg-muted lg:ml-64">
       <main className="p-4 lg:p-8 pb-24 lg:pb-8">
         <div className="max-w-6xl mx-auto">
           {/* Back Button */}
           <a 
             href="/"
-            className="inline-flex items-center gap-2 text-zinc-600 hover:text-zinc-900 mb-4 transition-colors"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-4 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             <span>Kembali ke Beranda</span>
@@ -239,17 +239,17 @@ export default function AdminUsersPage() {
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-zinc-900 rounded-lg">
+              <div className="p-2 bg-primary rounded-lg">
                 <Shield className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-zinc-900">Admin - Manajemen Pengguna</h1>
-                <p className="text-zinc-500 text-sm">Buat dan kelola pengguna sistem</p>
+                <h1 className="text-2xl font-bold text-foreground">Admin - Manajemen Pengguna</h1>
+                <p className="text-muted-foreground text-sm">Buat dan kelola pengguna sistem</p>
               </div>
             </div>
             <button
               onClick={openCreateModal}
-              className="flex items-center gap-2 px-4 py-2 bg-zinc-900 text-white rounded-xl font-medium hover:bg-zinc-800 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl font-medium hover:bg-primary/90 transition-colors"
             >
               <Plus className="w-4 h-4" />
               Tambah Pengguna
@@ -270,9 +270,9 @@ export default function AdminUsersPage() {
 
           {/* Stats */}
           <div className="grid grid-cols-4 gap-4 mb-6">
-            <div className="bg-white rounded-2xl p-4 border border-zinc-200">
-              <p className="text-2xl font-bold text-zinc-900">{users.length}</p>
-              <p className="text-sm text-zinc-500">Total Pengguna</p>
+            <div className="bg-card rounded-2xl p-4 border border-border">
+              <p className="text-2xl font-bold text-foreground">{users.length}</p>
+              <p className="text-sm text-muted-foreground">Total Pengguna</p>
             </div>
             <div className="bg-emerald-50 rounded-2xl p-4 border border-emerald-100">
               <p className="text-2xl font-bold text-emerald-700">
@@ -280,11 +280,11 @@ export default function AdminUsersPage() {
               </p>
               <p className="text-sm text-emerald-600">Aktif</p>
             </div>
-            <div className="bg-zinc-50 rounded-2xl p-4 border border-zinc-200">
-              <p className="text-2xl font-bold text-zinc-700">
+            <div className="bg-muted rounded-2xl p-4 border border-border">
+              <p className="text-2xl font-bold text-foreground">
                 {users.filter(u => !u.isActive).length}
               </p>
-              <p className="text-sm text-zinc-500">Tidak Aktif</p>
+              <p className="text-sm text-muted-foreground">Tidak Aktif</p>
             </div>
             <div className="bg-red-50 rounded-2xl p-4 border border-red-100">
               <p className="text-2xl font-bold text-red-700">
@@ -295,29 +295,29 @@ export default function AdminUsersPage() {
           </div>
 
           {/* Users Table */}
-          <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden">
+          <div className="bg-card rounded-2xl border border-border overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-zinc-50 border-b border-zinc-200">
+                <thead className="bg-muted border-b border-border">
                   <tr>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-zinc-700">Pengguna</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-zinc-700">Peran</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-zinc-700">Departemen</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-zinc-700">Status</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-zinc-700">Aksi</th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">Pengguna</th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">Peran</th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">Departemen</th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">Status</th>
+                    <th className="text-left py-3 px-4 text-sm font-semibold text-foreground">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100">
                   {users.map((user) => (
-                    <tr key={user.id} className="hover:bg-zinc-50">
+                    <tr key={user.id} className="hover:bg-muted">
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-zinc-200 rounded-full flex items-center justify-center">
-                            <UserIcon className="w-5 h-5 text-zinc-500" />
+                          <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+                            <UserIcon className="w-5 h-5 text-muted-foreground" />
                           </div>
                           <div>
-                            <p className="font-medium text-zinc-900">{user.name}</p>
-                            <p className="text-sm text-zinc-500">@{user.username}</p>
+                            <p className="font-medium text-foreground">{user.name}</p>
+                            <p className="text-sm text-muted-foreground">@{user.username}</p>
                           </div>
                         </div>
                       </td>
@@ -327,7 +327,7 @@ export default function AdminUsersPage() {
                         </span>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="text-sm text-zinc-600 capitalize">
+                        <span className="text-sm text-muted-foreground capitalize">
                           {DEPARTMENTS.find(d => d.value === user.department)?.label || user.department}
                         </span>
                       </td>
@@ -337,7 +337,7 @@ export default function AdminUsersPage() {
                           className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium transition-colors ${
                             user.isActive 
                               ? 'bg-emerald-100 text-emerald-700' 
-                              : 'bg-zinc-100 text-zinc-500'
+                              : 'bg-muted text-muted-foreground'
                           }`}
                         >
                           {user.isActive ? (
@@ -351,13 +351,13 @@ export default function AdminUsersPage() {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => openEditModal(user)}
-                            className="p-2 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 rounded-lg transition-colors"
+                            className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleDelete(user.id)}
-                            className="p-2 text-zinc-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-2 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -375,22 +375,22 @@ export default function AdminUsersPage() {
       {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl font-bold text-zinc-900 mb-4">
+          <div className="bg-card rounded-2xl p-6 w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl font-bold text-foreground mb-4">
               {editingUser ? 'Edit Pengguna' : 'Buat Pengguna Baru'}
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Username */}
               <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Username *
                 </label>
                 <input
                   type="text"
                   value={formData.username}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  className="w-full h-11 px-3 rounded-lg border border-zinc-300 focus:border-zinc-900 focus:outline-none"
+                  className="w-full h-11 px-3 rounded-lg border border-border focus:border-primary focus:outline-none"
                   placeholder="john_doe"
                   required
                   disabled={!!editingUser}
@@ -399,14 +399,14 @@ export default function AdminUsersPage() {
 
               {/* Name */}
               <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Nama Lengkap *
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full h-11 px-3 rounded-lg border border-zinc-300 focus:border-zinc-900 focus:outline-none"
+                  className="w-full h-11 px-3 rounded-lg border border-border focus:border-primary focus:outline-none"
                   placeholder="John Doe"
                   required
                 />
@@ -414,14 +414,14 @@ export default function AdminUsersPage() {
 
               {/* Password */}
               <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Password {editingUser && '(kosongkan untuk mempertahankan)'}
                 </label>
                 <input
                   type="password"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full h-11 px-3 rounded-lg border border-zinc-300 focus:border-zinc-900 focus:outline-none"
+                  className="w-full h-11 px-3 rounded-lg border border-border focus:border-primary focus:outline-none"
                   placeholder="••••••••"
                   required={!editingUser}
                 />
@@ -429,13 +429,13 @@ export default function AdminUsersPage() {
 
               {/* Role */}
               <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Peran *
                 </label>
                 <select
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  className="w-full h-11 px-3 rounded-lg border border-zinc-300 focus:border-zinc-900 focus:outline-none bg-white"
+                  className="w-full h-11 px-3 rounded-lg border border-border focus:border-primary focus:outline-none bg-card"
                   required
                 >
                   {ROLES.map((role) => (
@@ -448,13 +448,13 @@ export default function AdminUsersPage() {
 
               {/* Department */}
               <div>
-                <label className="block text-sm font-medium text-zinc-700 mb-1">
+                <label className="block text-sm font-medium text-foreground mb-1">
                   Departemen *
                 </label>
                 <select
                   value={formData.department}
                   onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                  className="w-full h-11 px-3 rounded-lg border border-zinc-300 focus:border-zinc-900 focus:outline-none bg-white"
+                  className="w-full h-11 px-3 rounded-lg border border-border focus:border-primary focus:outline-none bg-card"
                   required
                 >
                   {DEPARTMENTS.map((dept) => (
@@ -470,13 +470,13 @@ export default function AdminUsersPage() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 h-11 border border-zinc-300 text-zinc-700 rounded-lg font-medium hover:bg-zinc-50"
+                  className="flex-1 h-11 border border-border text-foreground rounded-lg font-medium hover:bg-muted"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 h-11 bg-zinc-900 text-white rounded-lg font-medium hover:bg-zinc-800"
+                  className="flex-1 h-11 bg-primary text-white rounded-lg font-medium hover:bg-primary/90"
                 >
                   {editingUser ? 'Update' : 'Buat'}
                 </button>

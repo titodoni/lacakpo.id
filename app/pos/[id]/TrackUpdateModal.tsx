@@ -68,13 +68,13 @@ export function TrackUpdateModal({
       <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
         {/* Header */}
         <div className="mb-6">
-          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 mb-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
             Update Progress
           </p>
-          <h2 className="text-lg font-bold text-zinc-900">
+          <h2 className="text-lg font-bold text-foreground">
             {departmentLabels[department]}
           </h2>
-          <p className="text-sm text-zinc-500 mt-1 truncate">{itemName}</p>
+          <p className="text-sm text-muted-foreground mt-1 truncate">{itemName}</p>
         </div>
 
         {/* Large Display */}
@@ -82,7 +82,7 @@ export function TrackUpdateModal({
           <span
             className={cn(
               'text-6xl font-bold font-mono',
-              value === 100 ? 'text-emerald-600' : 'text-zinc-900'
+              value === 100 ? 'text-emerald-600' : 'text-foreground'
             )}
           >
             {value}%
@@ -98,12 +98,12 @@ export function TrackUpdateModal({
             value={value}
             onChange={(e) => setValue(parseInt(e.target.value))}
             disabled={isLoading}
-            className="w-full h-3 bg-zinc-200 rounded-lg appearance-none cursor-pointer"
+            className="w-full h-3 bg-muted rounded-lg appearance-none cursor-pointer"
             style={{
               background: `linear-gradient(to right, #18181b ${value}%, #e4e4e7 ${value}%)`
             }}
           />
-          <div className="flex justify-between text-xs text-zinc-400 mt-2">
+          <div className="flex justify-between text-xs text-muted-foreground mt-2">
             <span>0%</span>
             <span>50%</span>
             <span>100%</span>
@@ -111,7 +111,7 @@ export function TrackUpdateModal({
         </div>
 
         {/* Progress Bar */}
-        <div className="h-4 bg-zinc-100 rounded-full overflow-hidden mb-6">
+        <div className="h-4 bg-muted rounded-full overflow-hidden mb-6">
           <div
             className={cn('h-full rounded-full transition-all duration-300', progressColor)}
             style={{ width: `${value}%` }}
@@ -128,8 +128,8 @@ export function TrackUpdateModal({
               className={cn(
                 'h-11 rounded-lg font-semibold text-sm transition-all',
                 value === q
-                  ? 'bg-zinc-900 text-white'
-                  : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
+                  ? 'bg-foreground text-white'
+                  : 'bg-muted text-foreground hover:bg-muted'
               )}
             >
               {q}%
@@ -142,14 +142,14 @@ export function TrackUpdateModal({
           <button
             onClick={() => adjust(-5)}
             disabled={isLoading}
-            className="flex-1 h-11 rounded-lg border-2 border-zinc-200 font-medium text-zinc-700 hover:bg-zinc-50"
+            className="flex-1 h-11 rounded-lg border-2 border-border font-medium text-foreground hover:bg-muted"
           >
             -5%
           </button>
           <button
             onClick={() => adjust(5)}
             disabled={isLoading}
-            className="flex-1 h-11 rounded-lg border-2 border-zinc-200 font-medium text-zinc-700 hover:bg-zinc-50"
+            className="flex-1 h-11 rounded-lg border-2 border-border font-medium text-foreground hover:bg-muted"
           >
             +5%
           </button>
@@ -162,7 +162,7 @@ export function TrackUpdateModal({
           onChange={(e) => setNote(e.target.value)}
           placeholder="Add note (optional)..."
           disabled={isLoading}
-          className="w-full h-11 px-3 rounded-lg border border-zinc-200 text-sm mb-6 focus:border-zinc-900 focus:outline-none"
+          className="w-full h-11 px-3 rounded-lg border border-border text-sm mb-6 focus:border-primary focus:outline-none"
         />
 
         {/* Actions */}
@@ -170,14 +170,14 @@ export function TrackUpdateModal({
           <button
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 h-12 border border-zinc-300 text-zinc-700 rounded-xl font-medium hover:bg-zinc-50"
+            className="flex-1 h-12 border border-border text-foreground rounded-xl font-medium hover:bg-muted"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={isLoading}
-            className="flex-1 h-12 bg-zinc-900 text-white rounded-xl font-medium disabled:opacity-50"
+            className="flex-1 h-12 bg-foreground text-white rounded-xl font-medium disabled:opacity-50"
           >
             {isLoading ? 'Saving...' : 'Update'}
           </button>

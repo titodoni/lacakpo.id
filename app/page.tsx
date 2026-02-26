@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useUser } from '@/hooks/useUser';
 import { StatCard } from '@/components/StatCard';
-import { ActivityLogItem } from '@/components/ActivityLogItem';
-import { AlertTriangle, CheckCircle2, Clock, Package, ClipboardList, BarChart3 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock, Package, ClipboardList, BarChart3, FileText } from 'lucide-react';
+import Link from 'next/link';
 
 interface DashboardData {
   stats: {
@@ -27,11 +27,25 @@ interface DashboardData {
   urgentItems: any[];
 }
 
+interface PO {
+  id: string;
+  poNumber: string;
+  clientPoNumber: string | null;
+  client: { name: string };
+  poDate: string;
+  deliveryDeadline: string | null;
+  status: string;
+  isUrgent: boolean;
+  isVendorJob: boolean;
+  vendorName: string | null;
+  _count: { items: number };
+}
 
 export default function HomePage() {
   const router = useRouter();
   const { user, loading: userLoading } = useUser();
   const [data, setData] = useState<DashboardData | null>(null);
+  const [poList, setPoList] = useState<PO[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -57,6 +71,7 @@ export default function HomePage() {
       }
       // Admin and managers see dashboard
       fetchDashboard();
+      fetchPOList();
     }
   }, [user, userLoading, router]);
 
@@ -74,10 +89,28 @@ export default function HomePage() {
     }
   };
 
+  const fetchPOList = async () => {
+    try {
+      const res = await fetch('/api/pos?limit=10');
+      if (res.ok) {
+        const poData = await res.json();
+        setPoList(poData.pos || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch PO list:', error);
+    }
+  };
+
+  const getDaysLeft = (deadline: string | null) => {
+    if (!deadline) return null;
+    const days = Math.ceil((new Date(deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+    return days;
+  };
+
   if (userLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-zinc-500">Memuat...</p>
+        <p className="text-muted-foreground">Memuat...</p>
       </div>
     );
   }
@@ -100,11 +133,11 @@ export default function HomePage() {
     <DashboardLayout user={userData}>
       <div className="space-y-6">
         {/* Welcome */}
-        <div className="bg-white rounded-2xl p-6 border border-zinc-200">
-          <h1 className="text-2xl font-bold text-zinc-900">
+        <div className="bg-card rounded-2xl p-6 border border-border">
+          <h1 className="text-2xl font-bold text-foreground">
             Selamat datang, {user.name}
           </h1>
-          <p className="text-zinc-500 mt-1">
+          <p className="text-muted-foreground mt-1">
             {user.role === 'super_admin' ? 'Akses Penuh' : 'Akses View Only'}
           </p>
         </div>
@@ -147,13 +180,13 @@ export default function HomePage() {
             icon={Package}
             label="Total Item"
             value={data?.stats.totalItems || 0}
-            color="bg-zinc-100"
+            color="bg-muted"
           />
           <StatCard
             icon={Clock}
             label="Belum Mulai"
             value={data?.stats.notStarted || 0}
-            color="bg-zinc-100"
+            color="bg-muted"
           />
           <StatCard
             icon={AlertTriangle}
@@ -177,7 +210,7 @@ export default function HomePage() {
                 <h2 className="text-lg font-semibold">
                   Departemen: {data.stats.myDeptStats.department.charAt(0).toUpperCase() + data.stats.myDeptStats.department.slice(1)}
                 </h2>
-                <p className="text-zinc-400 text-sm mt-1">
+                <p className="text-muted-foreground text-sm mt-1">
                   {data.stats.myDeptStats.completed} selesai / {data.stats.myDeptStats.total} total
                 </p>
               </div>
@@ -185,10 +218,10 @@ export default function HomePage() {
                 <span className="text-4xl font-bold">
                   {data.stats.myDeptStats.averageProgress}%
                 </span>
-                <p className="text-zinc-400 text-sm">rata-rata progress</p>
+                <p className="text-muted-foreground text-sm">rata-rata progress</p>
               </div>
             </div>
-            <div className="mt-4 h-2 bg-zinc-700 rounded-full overflow-hidden">
+            <div className="mt-4 h-2 bg-muted-foreground rounded-full overflow-hidden">
               <div 
                 className="h-full bg-emerald-500 rounded-full transition-all"
                 style={{ width: `${data.stats.myDeptStats.averageProgress}%` }}
@@ -197,24 +230,93 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Recent Activity */}
-        <div className="bg-white rounded-2xl p-6 border border-zinc-200">
-          <h2 className="text-lg font-semibold text-zinc-900 mb-4">Aktivitas Terbaru</h2>
-          {data?.recentActivity && data.recentActivity.length > 0 ? (
+        {/* PO List - REPLACING Aktivitas Terbaru */}
+        <div className="bg-card rounded-2xl p-6 border border-border">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-foreground">Daftar PO</h2>
+            {canCreatePO && (
+              <Link
+                href="/pos/new"
+                className="px-4 py-2 bg-foreground text-white text-sm font-medium rounded-lg hover:bg-foreground/90 transition-colors"
+              >
+                + Buat PO
+              </Link>
+            )}
+          </div>
+          
+          {poList.length > 0 ? (
             <div className="space-y-3">
-              {data.recentActivity.slice(0, 5).map((log) => (
-                <ActivityLogItem key={log.id} log={log} />
-              ))}
+              {poList.map((po) => {
+                const daysLeft = getDaysLeft(po.deliveryDeadline);
+                const isOverdue = daysLeft !== null && daysLeft < 0;
+                const isUrgent = po.isUrgent || (daysLeft !== null && daysLeft <= 3 && daysLeft >= 0);
+                
+                return (
+                  <Link
+                    key={po.id}
+                    href={`/pos/${po.id}`}
+                    className="block p-4 rounded-xl border border-border hover:border-muted-foreground/50 hover:shadow-sm transition-all"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <FileText className="w-4 h-4 text-muted-foreground" />
+                          <span className="font-mono font-medium text-foreground">{po.poNumber}</span>
+                          {po.clientPoNumber && (
+                            <span className="text-xs text-muted-foreground">({po.clientPoNumber})</span>
+                          )}
+                          {po.isUrgent && (
+                            <span className="px-2 py-0.5 text-xs font-bold bg-red-100 text-red-600 rounded-full">
+                              URGENT
+                            </span>
+                          )}
+                          {po.isVendorJob && (
+                            <span className="px-2 py-0.5 text-xs font-bold bg-blue-100 text-blue-600 rounded-full">
+                              VENDOR
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">{po.client.name}</p>
+                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                          <span>{po._count.items} item</span>
+                          <span>•</span>
+                          <span>{new Date(po.poDate).toLocaleDateString('id-ID')}</span>
+                          {daysLeft !== null && (
+                            <>
+                              <span>•</span>
+                              <span className={isOverdue ? 'text-red-600 font-medium' : isUrgent ? 'text-amber-600 font-medium' : ''}>
+                                {isOverdue ? `${Math.abs(daysLeft)}h telat` : `${daysLeft}h lagi`}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                          po.status === 'active' 
+                            ? 'bg-emerald-100 text-emerald-700' 
+                            : po.status === 'completed'
+                            ? 'bg-muted text-foreground'
+                            : 'bg-red-100 text-red-700'
+                        }`}>
+                          {po.status === 'active' ? 'Aktif' : po.status === 'completed' ? 'Selesai' : 'Batal'}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           ) : (
-            <p className="text-zinc-500 text-center py-8">Tidak ada aktivitas terbaru</p>
+            <p className="text-muted-foreground text-center py-8">Tidak ada PO ditemukan</p>
           )}
-          <a
-            href="/logs"
-            className="block text-center text-sm text-zinc-600 hover:text-zinc-900 mt-4 pt-4 border-t border-zinc-100"
+          
+          <Link
+            href="/pos"
+            className="block text-center text-sm text-muted-foreground hover:text-foreground mt-4 pt-4 border-t border-border"
           >
-            Lihat semua aktivitas →
-          </a>
+            Lihat semua PO →
+          </Link>
         </div>
       </div>
     </DashboardLayout>
@@ -237,15 +339,13 @@ function QuickActionCard({
   return (
     <a
       href={href}
-      className="block bg-white rounded-2xl p-5 border border-zinc-200 hover:border-zinc-400 transition-colors"
+      className="block bg-card rounded-2xl p-5 border border-border hover:border-muted-foreground/50 transition-colors"
     >
       <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center mb-3`}>
         <Icon className="w-5 h-5" />
       </div>
-      <h3 className="font-semibold text-zinc-900">{title}</h3>
-      <p className="text-sm text-zinc-500 mt-1">{description}</p>
+      <h3 className="font-semibold text-foreground">{title}</h3>
+      <p className="text-sm text-muted-foreground mt-1">{description}</p>
     </a>
   );
 }
-
-

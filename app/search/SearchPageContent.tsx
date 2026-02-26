@@ -130,7 +130,7 @@ export default function SearchPageContent() {
   if (userLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-zinc-500">Memuat...</p>
+        <p className="text-muted-foreground">Memuat...</p>
       </div>
     );
   }
@@ -158,10 +158,10 @@ export default function SearchPageContent() {
         </div>
 
         {/* Search Form */}
-        <div className="bg-white rounded-2xl border p-6" style={{ borderColor: colors.paleSky }}>
+        <div className="bg-card rounded-2xl border p-6" style={{ borderColor: colors.paleSky }}>
           <form onSubmit={handleSearch} className="space-y-4">
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-zinc-400" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <input
                 type="text"
                 value={query}
@@ -199,7 +199,7 @@ export default function SearchPageContent() {
                   <select
                     value={selectedClient}
                     onChange={(e) => setSelectedClient(e.target.value)}
-                    className="w-full h-12 px-4 rounded-xl border focus:outline-none focus:ring-2 transition-all bg-white"
+                    className="w-full h-12 px-4 rounded-xl border focus:outline-none focus:ring-2 transition-all bg-card"
                     style={{ borderColor: colors.paleSky }}
                   >
                     <option value="">Semua Client</option>
@@ -218,7 +218,7 @@ export default function SearchPageContent() {
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="w-full h-12 px-4 rounded-xl border focus:outline-none focus:ring-2 transition-all bg-white"
+                    className="w-full h-12 px-4 rounded-xl border focus:outline-none focus:ring-2 transition-all bg-card"
                     style={{ borderColor: colors.paleSky }}
                   >
                     <option value="">Semua Status</option>
@@ -306,7 +306,7 @@ export default function SearchPageContent() {
                 <a
                   key={result.id}
                   href={result.type === 'po' ? `/pos/${result.id}` : `/pos/${result.id}?item=${result.id}`}
-                  className="block bg-white rounded-2xl border p-5 hover:border-zinc-400 transition-colors"
+                  className="block bg-card rounded-2xl border p-5 hover:border-border transition-colors"
                   style={{ borderColor: colors.paleSky }}
                 >
                   <div className="flex items-start gap-4">
@@ -367,7 +367,7 @@ export default function SearchPageContent() {
             </div>
           </div>
         ) : (query || hasActiveFilters) && !loading ? (
-          <div className="bg-white rounded-2xl border p-12 text-center" style={{ borderColor: colors.paleSky }}>
+          <div className="bg-card rounded-2xl border p-12 text-center" style={{ borderColor: colors.paleSky }}>
             <Search className="w-12 h-12 mx-auto mb-4" style={{ color: colors.paleSky }} />
             <h3 className="font-semibold text-lg" style={{ color: colors.black }}>Tidak ditemukan</h3>
             <p className="text-sm mt-1" style={{ color: colors.gunmetal }}>

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, memo } from 'react';
+import Link from 'next/link';
 import { cn, canUpdateTrack } from '@/lib/utils';
 import { IssueBadge } from './IssueBadge';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, X, AlertCircle, Info, CheckCircle2, User } from 'lucide-react';
 
 // Custom debounce hook
 function useDebouncedCallback<T extends (...args: any[]) => void>(
@@ -93,19 +94,12 @@ interface ItemCardProps {
   navigateOnClick?: boolean; // If false, click will trigger edit mode (for workers)
 }
 
-// Color Palette
-const colors = {
-  primary: '#003049',
-  danger: '#d62828',
-  accent: '#f77f00',
-};
-
 const deptLabels: Record<string, string> = {
-  drafting: 'Drafting',
-  purchasing: 'Purchasing',
-  production: 'Produksi',
+  drafting: 'Draft',
+  purchasing: 'Purch',
+  production: 'Prod',
   qc: 'QC',
-  delivery: 'Delivery',
+  delivery: 'Deliv',
 };
 
 const workflowOrder: Record<string, number> = {
@@ -116,53 +110,184 @@ const workflowOrder: Record<string, number> = {
   delivery: 5,
 };
 
-// Card status colors
-const cardStatusColors: Record<string, { border: string; bg: string; label: string; labelColor: string }> = {
-  urgent: {
-    border: colors.danger,
-    bg: '#fee2e2',
-    label: 'PENTING',
-    labelColor: colors.danger,
+const priorityConfig = {
+  high: {
+    label: 'Tinggi',
+    color: 'bg-red-100 text-red-700 border-red-200',
+    icon: AlertTriangle,
+    dotColor: 'bg-red-500',
   },
-  delayed: {
-    border: colors.accent,
-    bg: '#ffedd5',
-    label: 'TERLAMBAT',
-    labelColor: colors.accent,
+  medium: {
+    label: 'Sedang',
+    color: 'bg-amber-100 text-amber-700 border-amber-200',
+    icon: AlertCircle,
+    dotColor: 'bg-amber-500',
   },
-  ongoing: {
-    border: colors.primary,
-    bg: '#e0f2fe',
-    label: 'BERJALAN',
-    labelColor: colors.primary,
-  },
-  'delivery-close': {
-    border: '#f59e0b',
-    bg: '#fef3c7',
-    label: 'SIAP KIRIM',
-    labelColor: '#f59e0b',
-  },
-  completed: {
-    border: '#16a34a',
-    bg: '#dcfce7',
-    label: 'SUDAH DIBAYAR',
-    labelColor: '#16a34a',
-  },
-  normal: {
-    border: '#e5e7eb',
-    bg: '#f9fafb',
-    label: '',
-    labelColor: '',
+  low: {
+    label: 'Rendah',
+    color: 'bg-blue-100 text-blue-700 border-blue-200',
+    icon: Info,
+    dotColor: 'bg-blue-500',
   },
 };
 
-function sortTracksByWorkflowOrder(tracks: Track[]): Track[] {
-  return [...tracks].sort((a, b) => {
-    return (workflowOrder[a.department] || 99) - (workflowOrder[b.department] || 99);
-  });
+// Issues Popup Component
+function IssuesPopup({ 
+  issues, 
+  onClose, 
+  onReportIssue,
+  itemName 
+}: { 
+  issues: Issue[]; 
+  onClose: () => void;
+  onReportIssue?: () => void;
+  itemName: string;
+}) {
+  const openIssues = issues.filter((i) => i.status === 'open');
+  const resolvedIssues = issues.filter((i) => i.status === 'resolved');
+  const [expandedIssue, setExpandedIssue] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleEscape);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = '';
+    };
+  }, [onClose]);
+
+  const renderIssue = (issue: Issue) => {
+    const config = priorityConfig[issue.priority];
+    const Icon = config.icon;
+    const isExpanded = expandedIssue === issue.id;
+    const isResolved = issue.status === 'resolved';
+
+    return (
+      <div
+        key={issue.id}
+        className={cn(
+          'border rounded-lg overflow-hidden transition-all',
+          isResolved ? 'bg-muted/50 border-border opacity-75' : 'bg-card border-border'
+        )}
+      >
+        <div
+          className="p-3 cursor-pointer"
+          onClick={() => setExpandedIssue(isExpanded ? null : issue.id)}
+        >
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-start gap-2 flex-1 min-w-0">
+              <Icon className={cn('w-4 h-4 mt-0.5 shrink-0', config.color.split(' ')[1])} />
+              <div className="flex-1 min-w-0">
+                <p className={cn('font-medium text-sm', isResolved && 'line-through text-muted-foreground')}>
+                  {issue.title}
+                </p>
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  <span className={cn('text-xs px-1.5 py-0.5 rounded border font-medium', config.color)}>
+                    {config.label}
+                  </span>
+                  {isResolved && (
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200 font-medium">
+                      Selesai
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {isExpanded && (
+          <div className="px-3 pb-3 pt-0 border-t border-border">
+            {issue.description && (
+              <p className="text-sm text-muted-foreground mt-2">{issue.description}</p>
+            )}
+            <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
+              <User className="w-3 h-3" />
+              <span>Dilaporkan oleh {issue.creator.name}</span>
+            </div>
+            {isResolved && issue.resolver && (
+              <div className="flex items-center gap-2 mt-1 text-xs text-emerald-600">
+                <CheckCircle2 className="w-3 h-3" />
+                <span>Diselesaikan oleh {issue.resolver.name}</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+      <div 
+        className="bg-card rounded-2xl w-full max-w-md max-h-[80vh] overflow-hidden shadow-2xl border border-border"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-border">
+          <div>
+            <h3 className="text-lg font-bold text-foreground">Masalah Item</h3>
+            <p className="text-sm text-muted-foreground">{itemName}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-4 overflow-y-auto max-h-[60vh]">
+          {issues.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <AlertTriangle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+              <p>Tidak ada masalah dilaporkan</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {openIssues.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    Masalah Terbuka ({openIssues.length})
+                  </h4>
+                  {openIssues.map(renderIssue)}
+                </div>
+              )}
+
+              {resolvedIssues.length > 0 && (
+                <div className="space-y-2 pt-2 border-t border-border">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    Selesai ({resolvedIssues.length})
+                  </h4>
+                  {resolvedIssues.map(renderIssue)}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        {onReportIssue && (
+          <div className="p-4 border-t border-border">
+            <button
+              onClick={onReportIssue}
+              className="w-full py-3 bg-destructive text-destructive-foreground font-medium rounded-xl hover:bg-destructive/90 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+            >
+              <AlertTriangle className="w-4 h-4" />
+              Laporkan Masalah Baru
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
-export function ItemCard({
+export const ItemCard = memo(function ItemCard({
   item,
   userRole,
   userDept,
@@ -176,7 +301,10 @@ export function ItemCard({
   navigateOnClick = true,
 }: ItemCardProps) {
   const issues = item.issues || [];
-  const sortedTracks = sortTracksByWorkflowOrder(item.tracks);
+  const openIssues = issues.filter((i) => i.status === 'open');
+  const sortedTracks = [...item.tracks].sort((a, b) => {
+    return (workflowOrder[a.department] || 99) - (workflowOrder[b.department] || 99);
+  });
   
   const myTrack = userDept && userDept !== 'delivery'
     ? item.tracks.find((t) => t.department === userDept)
@@ -191,6 +319,9 @@ export function ItemCard({
   const [isEditingDelivery, setIsEditingDelivery] = useState(false);
   const [deliveryValue, setDeliveryValue] = useState(item.quantityDelivered);
   const [displayDelivered, setDisplayDelivered] = useState(item.quantityDelivered);
+  
+  // Issues popup state
+  const [showIssuesPopup, setShowIssuesPopup] = useState(false);
   
   const [savedFeedback, setSavedFeedback] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -253,13 +384,10 @@ export function ItemCard({
     }
   };
 
+  // Optimistic update for better performance
   const handleUpdateProgress = async (trackId: string, newProgress: number) => {
-    // Prevent duplicate submissions
-    if (pendingSaveRef.current) {
-      return;
-    }
+    if (pendingSaveRef.current) return;
     
-    // Cancel any pending request
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -270,7 +398,6 @@ export function ItemCard({
     setIsSaving(true);
     pendingSaveRef.current = true;
     
-    // Create new abort controller for this request
     abortControllerRef.current = new AbortController();
     
     try {
@@ -289,17 +416,14 @@ export function ItemCard({
       } else {
         setDisplayProgress(oldProgress);
         setIsSaving(false);
-        alert('Gagal menyimpan progress');
       }
     } catch (error) {
-      // Don't revert on abort (user cancelled)
       if (error instanceof DOMException && error.name === 'AbortError') {
         setIsSaving(false);
         return;
       }
       setDisplayProgress(oldProgress);
       setIsSaving(false);
-      alert('Gagal menyimpan progress');
     } finally {
       pendingSaveRef.current = false;
       abortControllerRef.current = null;
@@ -311,16 +435,12 @@ export function ItemCard({
     (trackId: string, newProgress: number) => {
       handleUpdateProgress(trackId, newProgress);
     },
-    300 // 300ms debounce
+    300
   );
 
   const handleUpdateDelivery = async (newQuantity: number) => {
-    // Prevent duplicate submissions
-    if (pendingSaveRef.current) {
-      return;
-    }
+    if (pendingSaveRef.current) return;
     
-    // Cancel any pending request
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -331,7 +451,6 @@ export function ItemCard({
     setIsSaving(true);
     pendingSaveRef.current = true;
     
-    // Create new abort controller for this request
     abortControllerRef.current = new AbortController();
     
     try {
@@ -350,29 +469,25 @@ export function ItemCard({
       } else {
         setDisplayDelivered(oldQuantity);
         setIsSaving(false);
-        alert('Gagal menyimpan quantity delivered');
       }
     } catch (error) {
-      // Don't revert on abort (user cancelled)
       if (error instanceof DOMException && error.name === 'AbortError') {
         setIsSaving(false);
         return;
       }
       setDisplayDelivered(oldQuantity);
       setIsSaving(false);
-      alert('Gagal menyimpan quantity delivered');
     } finally {
       pendingSaveRef.current = false;
       abortControllerRef.current = null;
     }
   };
   
-  // Debounced version for delivery slider
   const debouncedUpdateDelivery = useDebouncedCallback(
     (newQuantity: number) => {
       handleUpdateDelivery(newQuantity);
     },
-    300 // 300ms debounce
+    300
   );
 
   const getDaysLeftText = () => {
@@ -382,68 +497,93 @@ export function ItemCard({
     return `${daysLeft}h lagi`;
   };
 
-  const statusColors = cardStatusColors[cardStatus] || cardStatusColors.normal;
-
-  // For workers (non-admin/manager), clicking card enters edit mode instead of navigation
   const shouldNavigate = navigateOnClick || !canEdit;
+
+  const handleIssueClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowIssuesPopup(true);
+  };
+
+  // Card status styles using theme colors
+  const getCardStyles = () => {
+    switch (cardStatus) {
+      case 'urgent':
+        return 'bg-red-50 border-red-400';
+      case 'delayed':
+        return 'bg-orange-50 border-orange-400';
+      case 'ongoing':
+        return 'bg-blue-50 border-blue-400';
+      case 'delivery-close':
+        return 'bg-amber-50 border-amber-400';
+      case 'completed':
+        return 'bg-emerald-50 border-emerald-400';
+      default:
+        return 'bg-card border-border';
+    }
+  };
+
+  const getStatusBadge = () => {
+    switch (cardStatus) {
+      case 'urgent':
+        return <span className="text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-red-100 text-red-600">PENTING</span>;
+      case 'delayed':
+        return <span className="text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-orange-100 text-orange-600">TERLAMBAT</span>;
+      case 'ongoing':
+        return <span className="text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-blue-100 text-blue-600">BERJALAN</span>;
+      case 'delivery-close':
+        return <span className="text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-amber-100 text-amber-600">SIAP KIRIM</span>;
+      case 'completed':
+        return <span className="text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-600">SUDAH DIBAYAR</span>;
+      default:
+        return null;
+    }
+  };
 
   const cardContent = (
     <>
-      {/* Header */}
-      <div className="px-3 py-2 flex items-center gap-2" style={{ backgroundColor: colors.accent }}>
+      {/* Header - Mobile Optimized with Theme Colors */}
+      <div className="px-2 sm:px-3 py-2 sm:py-2.5 flex flex-wrap items-center gap-1.5 sm:gap-2 bg-accent/10">
         {/* Item Name */}
-        <h3 className="font-bold text-lg truncate shrink-0 max-w-[200px]" style={{ color: colors.primary }}>
+        <h3 className="font-bold text-sm sm:text-lg truncate max-w-[120px] sm:max-w-[200px] text-foreground">
           {item.itemName}
         </h3>
         
-        <span style={{ color: colors.accent }}>-</span>
+        <span className="hidden sm:inline text-accent">-</span>
         
         {/* Company Name */}
-        <span className="font-semibold text-base truncate shrink-0 max-w-[150px]" style={{ color: colors.primary }}>
+        <span className="font-semibold text-xs sm:text-base truncate max-w-[100px] sm:max-w-[150px] text-foreground">
           {item.purchaseOrder.client.name}
         </span>
         
-        <span style={{ color: colors.accent }}>-</span>
+        <span className="hidden sm:inline text-accent">-</span>
         
         {/* PO Number */}
         <span 
-          className="font-mono text-sm px-1.5 py-0.5 rounded shrink-0" 
-          style={{ backgroundColor: '#ffffff', color: colors.primary }}
-          title={`PO ID: ${item.purchaseOrder?.id || 'N/A'}`}
+          className="font-mono text-xs sm:text-sm px-1 sm:px-1.5 py-0.5 rounded shrink-0 bg-background text-foreground"
         >
           {item.purchaseOrder.poNumber}
         </span>
         
-        <span style={{ color: colors.accent }}>•</span>
+        <span className="hidden sm:inline text-accent">•</span>
         
         {/* Quantity */}
-        <span className="text-sm shrink-0" style={{ color: colors.primary }}>
+        <span className="text-xs sm:text-sm shrink-0 text-foreground">
           {item.quantityTotal} {item.quantityUnit}
         </span>
 
         {/* Status Badge */}
-        {cardStatus !== 'normal' && statusColors.label && (
-          <>
-            <span style={{ color: colors.accent }}>•</span>
-            <span 
-              className="text-xs font-bold px-2 py-0.5 rounded-full shrink-0"
-              style={{ backgroundColor: statusColors.labelColor + '20', color: statusColors.labelColor }}
-            >
-              {statusColors.label}
-            </span>
-          </>
-        )}
+        {cardStatus !== 'normal' && getStatusBadge()}
 
         {/* Vendor Badge */}
         {isVendorJob && (
           <>
-            <span style={{ color: colors.accent }}>•</span>
+            <span className="hidden sm:inline text-accent">•</span>
             <span 
-              className="text-xs font-bold px-2 py-0.5 rounded-full shrink-0"
-              style={{ backgroundColor: '#3b82f620', color: '#3b82f6' }}
+              className="text-[10px] sm:text-xs font-bold px-1.5 sm:px-2 py-0.5 rounded-full shrink-0 bg-blue-100 text-blue-600"
               title={vendorName || 'Vendor'}
             >
-              VENDOR
+              <span className="sm:hidden">V</span>
+              <span className="hidden sm:inline">VENDOR</span>
             </span>
           </>
         )}
@@ -451,14 +591,22 @@ export function ItemCard({
         {/* Spacer */}
         <div className="flex-1" />
         
-        {/* Right Side */}
-        <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-          <IssueBadge issues={issues} compact />
+        {/* Right Side - Issues & Days Left */}
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+          {/* Clickable Issues Badge */}
+          {openIssues.length > 0 && (
+            <button
+              onClick={handleIssueClick}
+              className="inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold text-white transition-transform active:scale-95 bg-destructive hover:bg-destructive/90"
+              title={`${openIssues.length} masalah terbuka - Klik untuk lihat detail`}
+            >
+              <AlertTriangle className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+              {openIssues.length}
+            </button>
+          )}
+          
           {daysLeft !== null && (
-            <span className="text-sm font-bold px-2 py-1 rounded-lg whitespace-nowrap text-white"
-              style={{
-                backgroundColor: isOverdue ? colors.danger : isUrgent ? colors.danger : colors.primary,
-              }}
+            <span className="text-xs sm:text-sm font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg whitespace-nowrap text-white bg-primary"
             >
               {getDaysLeftText()}
             </span>
@@ -466,36 +614,35 @@ export function ItemCard({
         </div>
       </div>
 
-      <div className="px-3 pb-3" style={{ backgroundColor: '#ffffff' }}>
-        {/* Departments Inline */}
-        <div className="flex items-center gap-3 text-sm mb-2" style={{ color: colors.primary }}>
+      <div className="px-2 sm:px-3 pb-2 sm:pb-3 bg-card">
+        {/* Departments - Mobile: horizontal scroll or wrap */}
+        <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-1 text-xs sm:text-sm mb-2 text-foreground">
           {sortedTracks.map((track, i) => (
-            <span key={track.id} className="flex items-center">
+            <span key={track.id} className="flex items-center shrink-0">
               <span className="font-medium">{deptLabels[track.department]}</span>
-              <span className="ml-1 font-bold font-mono"
-                style={{ color: track.progress === 100 ? colors.danger : colors.primary }}
-              >
+              <span className="ml-1 font-bold font-mono text-xs sm:text-sm text-primary">
                 {track.progress}%
               </span>
-              {i < sortedTracks.length - 1 && <span className="ml-3" style={{ color: colors.accent }}>-</span>}
+              {i < sortedTracks.length - 1 && <span className="ml-2 sm:ml-3 text-accent">-</span>}
             </span>
           ))}
         </div>
 
-        {/* User's Track */}
+        {/* User's Track - Full Width Progress */}
         {myTrack && (
-          <div className="pt-2 border-t" style={{ borderColor: colors.accent }} onClick={(e) => e.stopPropagation()}>
+          <div className="pt-2 border-t border-accent/30" onClick={(e) => e.stopPropagation()}>
             {isEditing ? (
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-sm font-bold" style={{ color: colors.primary }}>
+                  <span className="text-xs sm:text-sm font-bold text-foreground">
                     {userDept ? deptLabels[userDept] : ''}
                   </span>
-                  <span className="text-xl font-black font-mono" style={{ color: colors.primary }}>
+                  <span className="text-lg sm:text-xl font-black font-mono text-foreground">
                     {editValue}%
                   </span>
                 </div>
                 
+                {/* Full Width Slider */}
                 <input
                   type="range"
                   min="0"
@@ -503,22 +650,15 @@ export function ItemCard({
                   step="5"
                   value={editValue}
                   onChange={(e) => setEditValue(parseInt(e.target.value))}
-                  className="w-full h-2.5 rounded-full appearance-none cursor-pointer mb-2"
-                  style={{
-                    background: `linear-gradient(to right, ${colors.primary} ${editValue}%, ${colors.accent} ${editValue}%)`,
-                  }}
+                  className="w-full h-2 sm:h-2.5 rounded-full appearance-none cursor-pointer mb-2 accent-primary"
                 />
                 
-                <div className="grid grid-cols-5 gap-1.5 mb-2">
+                <div className="grid grid-cols-5 gap-1 sm:gap-1.5 mb-2">
                   {[0, 25, 50, 75, 100].map((q) => (
                     <button
                       key={q}
                       onClick={() => setEditValue(q)}
-                      className="py-1.5 text-xs font-bold rounded-lg transition-all"
-                      style={{
-                        backgroundColor: editValue === q ? colors.primary : colors.accent,
-                        color: editValue === q ? 'white' : colors.primary,
-                      }}
+                      className="py-1 sm:py-1.5 text-[10px] sm:text-xs font-bold rounded-lg transition-all bg-muted text-foreground hover:bg-primary hover:text-primary-foreground"
                     >
                       {q}%
                     </button>
@@ -528,21 +668,16 @@ export function ItemCard({
                 <div className="flex gap-2">
                   <button
                     onClick={() => setIsEditing(false)}
-                    className="flex-1 py-2 text-xs font-bold rounded-lg transition-colors"
-                    style={{ backgroundColor: colors.accent, color: colors.primary }}
+                    className="flex-1 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold rounded-lg transition-colors bg-muted text-foreground hover:bg-muted/80"
                   >
                     Batal
                   </button>
                   <button
                     onClick={() => handleUpdateProgress(myTrack.id, editValue)}
                     disabled={editValue === displayProgress || isSaving}
-                    className="flex-1 py-2 text-xs font-bold rounded-lg transition-all"
-                    style={{
-                      backgroundColor: editValue === displayProgress || isSaving ? colors.accent : colors.primary,
-                      color: editValue === displayProgress || isSaving ? colors.primary : 'white',
-                    }}
+                    className="flex-1 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold rounded-lg transition-all bg-primary text-primary-foreground disabled:opacity-50"
                   >
-                    {isSaving ? 'Menyimpan...' : 'Update'}
+                    {isSaving ? '...' : 'Update'}
                   </button>
                 </div>
               </div>
@@ -552,49 +687,45 @@ export function ItemCard({
                 className={canEdit ? 'cursor-pointer' : ''}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-bold" style={{ color: colors.primary }}>
+                  <span className="text-xs sm:text-sm font-bold text-foreground">
                     {userDept ? deptLabels[userDept] : ''}
                   </span>
-                  <span className="text-xl font-black font-mono"
-                    style={{ color: displayProgress === 100 ? colors.danger : colors.primary }}
-                  >
+                  <span className="text-lg sm:text-xl font-black font-mono text-primary">
                     {displayProgress}%
                   </span>
                 </div>
-                <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: colors.accent }}>
+                {/* Full Width Progress Bar */}
+                <div className="h-1.5 sm:h-2 rounded-full overflow-hidden bg-muted">
                   <div 
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${displayProgress}%`,
-                      backgroundColor: displayProgress === 100 ? colors.danger : colors.primary,
-                    }} 
+                    className="h-full rounded-full transition-all duration-500 bg-primary"
+                    style={{ width: `${displayProgress}%` }} 
                   />
                 </div>
                 {canEdit && (
                   <div className="flex items-center justify-between mt-1">
-                    <p className="text-[10px]" style={{ color: colors.accent }}>Klik untuk edit progress</p>
+                    <p className="text-[9px] sm:text-[10px] text-muted-foreground">Klik untuk edit</p>
                     {savedFeedback && (
-                      <span className="text-[10px] font-bold flex items-center gap-0.5" style={{ color: colors.danger }}>
-                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <span className="text-[9px] sm:text-[10px] font-bold flex items-center gap-0.5 text-emerald-600">
+                        <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
                         Tersimpan
                       </span>
                     )}
                     {isSaving && (
-                      <span className="text-[10px] font-medium" style={{ color: colors.primary }}>Menyimpan...</span>
+                      <span className="text-[9px] sm:text-[10px] font-medium text-muted-foreground">Menyimpan...</span>
                     )}
                   </div>
                 )}
                 
                 {/* Vendor Job Block Message */}
                 {isBlockedByVendor && (
-                  <div className="mt-2 p-2 rounded-lg text-center" style={{ backgroundColor: '#3b82f620' }}>
-                    <p className="text-xs font-medium" style={{ color: '#3b82f6' }}>
+                  <div className="mt-2 p-1.5 sm:p-2 rounded-lg text-center bg-blue-50">
+                    <p className="text-[10px] sm:text-xs font-medium text-blue-600">
                       Dikerjakan Vendor: {vendorName}
                     </p>
-                    <p className="text-[10px] mt-0.5" style={{ color: colors.primary }}>
-                      Production tidak dapat update progress
+                    <p className="text-[9px] sm:text-[10px] mt-0.5 text-foreground">
+                      Production tidak dapat update
                     </p>
                   </div>
                 )}
@@ -605,15 +736,15 @@ export function ItemCard({
 
         {/* Delivery Section for Delivery Users */}
         {isDeliveryUser && (
-          <div className="pt-2 border-t mt-2" style={{ borderColor: colors.accent }} onClick={(e) => e.stopPropagation()}>
+          <div className="pt-2 border-t border-accent/30 mt-2" onClick={(e) => e.stopPropagation()}>
             {isEditingDelivery ? (
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-sm font-bold" style={{ color: colors.primary }}>
-                    Quantity Delivered
+                  <span className="text-xs sm:text-sm font-bold text-foreground">
+                    Qty Delivered
                   </span>
-                  <span className="text-xl font-black font-mono" style={{ color: colors.primary }}>
-                    {deliveryValue} / {item.quantityTotal} {item.quantityUnit}
+                  <span className="text-lg sm:text-xl font-black font-mono text-foreground">
+                    {deliveryValue} / {item.quantityTotal}
                   </span>
                 </div>
                 
@@ -624,30 +755,22 @@ export function ItemCard({
                   step="1"
                   value={deliveryValue}
                   onChange={(e) => setDeliveryValue(parseInt(e.target.value))}
-                  className="w-full h-2.5 rounded-full appearance-none cursor-pointer mb-2"
-                  style={{
-                    background: `linear-gradient(to right, ${colors.primary} ${(deliveryValue / item.quantityTotal) * 100}%, ${colors.accent} ${(deliveryValue / item.quantityTotal) * 100}%)`,
-                  }}
+                  className="w-full h-2 sm:h-2.5 rounded-full appearance-none cursor-pointer mb-2 accent-primary"
                 />
                 
                 <div className="flex gap-2">
                   <button
                     onClick={() => setIsEditingDelivery(false)}
-                    className="flex-1 py-2 text-xs font-bold rounded-lg transition-colors"
-                    style={{ backgroundColor: colors.accent, color: colors.primary }}
+                    className="flex-1 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold rounded-lg transition-colors bg-muted text-foreground hover:bg-muted/80"
                   >
                     Batal
                   </button>
                   <button
                     onClick={() => handleUpdateDelivery(deliveryValue)}
                     disabled={deliveryValue === displayDelivered || isSaving}
-                    className="flex-1 py-2 text-xs font-bold rounded-lg transition-all"
-                    style={{
-                      backgroundColor: deliveryValue === displayDelivered || isSaving ? colors.accent : colors.primary,
-                      color: deliveryValue === displayDelivered || isSaving ? colors.primary : 'white',
-                    }}
+                    className="flex-1 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold rounded-lg transition-all bg-primary text-primary-foreground disabled:opacity-50"
                   >
-                    {isSaving ? 'Menyimpan...' : 'Update'}
+                    {isSaving ? '...' : 'Update'}
                   </button>
                 </div>
               </div>
@@ -657,36 +780,31 @@ export function ItemCard({
                 className="cursor-pointer"
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-bold" style={{ color: colors.primary }}>
-                    Quantity Delivered
+                  <span className="text-xs sm:text-sm font-bold text-foreground">
+                    Qty Delivered
                   </span>
-                  <span className="text-xl font-black font-mono"
-                    style={{ color: displayDelivered >= item.quantityTotal ? colors.danger : colors.primary }}
-                  >
-                    {displayDelivered} / {item.quantityTotal} {item.quantityUnit}
+                  <span className="text-lg sm:text-xl font-black font-mono text-primary">
+                    {displayDelivered} / {item.quantityTotal}
                   </span>
                 </div>
-                <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: colors.accent }}>
+                <div className="h-1.5 sm:h-2 rounded-full overflow-hidden bg-muted">
                   <div 
-                    className="h-full rounded-full transition-all duration-500"
-                    style={{
-                      width: `${(displayDelivered / item.quantityTotal) * 100}%`,
-                      backgroundColor: displayDelivered >= item.quantityTotal ? colors.danger : colors.primary,
-                    }} 
+                    className="h-full rounded-full transition-all duration-500 bg-primary"
+                    style={{ width: `${(displayDelivered / item.quantityTotal) * 100}%` }} 
                   />
                 </div>
                 <div className="flex items-center justify-between mt-1">
-                  <p className="text-[10px]" style={{ color: colors.accent }}>Klik untuk edit quantity</p>
+                  <p className="text-[9px] sm:text-[10px] text-muted-foreground">Klik untuk edit</p>
                   {savedFeedback && (
-                    <span className="text-[10px] font-bold flex items-center gap-0.5" style={{ color: colors.danger }}>
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <span className="text-[9px] sm:text-[10px] font-bold flex items-center gap-0.5 text-emerald-600">
+                      <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                       Tersimpan
                     </span>
                   )}
                   {isSaving && (
-                    <span className="text-[10px] font-medium" style={{ color: colors.primary }}>Menyimpan...</span>
+                    <span className="text-[9px] sm:text-[10px] font-medium text-muted-foreground">Menyimpan...</span>
                   )}
                 </div>
               </div>
@@ -699,63 +817,57 @@ export function ItemCard({
           <div className="mt-2 flex justify-end" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => onReportIssue(item)}
-              className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold rounded-md border transition-colors"
-              style={{
-                backgroundColor: 'transparent',
-                borderColor: colors.danger,
-                color: colors.danger,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = colors.danger;
-                e.currentTarget.style.color = 'white';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = colors.danger;
-              }}
+              className="flex items-center gap-1 px-2 sm:px-2.5 py-1 text-[10px] sm:text-[11px] font-bold rounded-md border border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors"
             >
-              <AlertTriangle className="w-3 h-3" />
-              Lapor Masalah
+              <AlertTriangle className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+              <span className="hidden sm:inline">Lapor Masalah</span>
+              <span className="sm:hidden">Lapor</span>
             </button>
           </div>
         )}
       </div>
+
+      {/* Issues Popup */}
+      {showIssuesPopup && (
+        <IssuesPopup
+          issues={issues}
+          itemName={item.itemName}
+          onClose={() => setShowIssuesPopup(false)}
+          onReportIssue={onReportIssue ? () => {
+            setShowIssuesPopup(false);
+            onReportIssue(item);
+          } : undefined}
+        />
+      )}
     </>
   );
 
   if (shouldNavigate) {
     const poId = item.purchaseOrder?.id;
-    if (!poId) {
-      console.error('ItemCard: Missing purchaseOrder.id for item', item.id, item.itemName);
-    }
     return (
-      <a
+      <Link
         href={`/pos/${poId || ''}`}
-        className="block rounded-xl overflow-hidden transition-all hover:shadow-lg"
-        style={{
-          backgroundColor: statusColors.bg,
-          border: `2px solid ${statusColors.border}`,
-          boxShadow: '0 2px 8px rgba(0,8,7,0.08)',
-          textDecoration: 'none',
-        }}
+        prefetch={true}
+        className={cn(
+          "block rounded-xl overflow-hidden transition-all hover:shadow-lg border-2",
+          getCardStyles()
+        )}
+        style={{ textDecoration: 'none' }}
       >
         {cardContent}
-      </a>
+      </Link>
     );
   }
 
-  // For workers: clicking card enters edit mode
   return (
     <div
       onClick={handleProgressClick}
-      className="block rounded-xl overflow-hidden transition-all hover:shadow-lg cursor-pointer"
-      style={{
-        backgroundColor: statusColors.bg,
-        border: `2px solid ${statusColors.border}`,
-        boxShadow: '0 2px 8px rgba(0,8,7,0.08)',
-      }}
+      className={cn(
+        "block rounded-xl overflow-hidden transition-all hover:shadow-lg cursor-pointer border-2",
+        getCardStyles()
+      )}
     >
       {cardContent}
     </div>
   );
-}
+});

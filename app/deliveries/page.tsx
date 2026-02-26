@@ -56,7 +56,7 @@ export default function DeliveriesPage() {
   if (userLoading || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <p className="text-zinc-500">Memuat...</p>
+        <p className="text-muted-foreground">Memuat...</p>
       </div>
     );
   }
@@ -84,8 +84,8 @@ export default function DeliveriesPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-zinc-900">Manajemen Pengiriman</h1>
-            <p className="text-zinc-500 mt-1">
+            <h1 className="text-2xl font-bold text-foreground">Manajemen Pengiriman</h1>
+            <p className="text-muted-foreground mt-1">
               Tandai item sebagai terkirim dan kelola surat jalan
             </p>
           </div>
@@ -101,23 +101,23 @@ export default function DeliveriesPage() {
             <p className="text-2xl font-bold text-emerald-700">{readyItems.length}</p>
             <p className="text-sm text-emerald-600">Siap Dikirim</p>
           </div>
-          <div className="bg-zinc-50 rounded-2xl p-4 border border-zinc-200">
-            <p className="text-2xl font-bold text-zinc-700">
+          <div className="bg-muted rounded-2xl p-4 border border-border">
+            <p className="text-2xl font-bold text-foreground">
               {Math.round((readyItems.length / (items.length || 1)) * 100)}%
             </p>
-            <p className="text-sm text-zinc-500">Tingkat Kesiapan</p>
+            <p className="text-sm text-muted-foreground">Tingkat Kesiapan</p>
           </div>
         </div>
 
         {/* Items List */}
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-zinc-900">Item Siap Dikirim</h2>
+          <h2 className="text-lg font-semibold text-foreground">Item Siap Dikirim</h2>
           
           {readyItems.length === 0 ? (
-            <div className="bg-white rounded-2xl p-12 border border-zinc-200 text-center">
-              <Package className="w-12 h-12 text-zinc-300 mx-auto mb-4" />
-              <p className="text-zinc-500">Tidak ada item siap dikirim.</p>
-              <p className="text-sm text-zinc-400 mt-2">
+            <div className="bg-card rounded-2xl p-12 border border-border text-center">
+              <Package className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+              <p className="text-muted-foreground">Tidak ada item siap dikirim.</p>
+              <p className="text-sm text-muted-foreground mt-2">
                 Item dengan QC 100% akan muncul di sini.
               </p>
             </div>
@@ -130,29 +130,29 @@ export default function DeliveriesPage() {
                 return (
                   <div
                     key={item.id}
-                    className="bg-white rounded-2xl p-5 border border-zinc-200 hover:border-emerald-300 transition-colors"
+                    className="bg-card rounded-2xl p-5 border border-border hover:border-emerald-300 transition-colors"
                   >
                     <div className="flex items-start justify-between">
                       <div>
-                        <h3 className="font-semibold text-zinc-900">{item.itemName}</h3>
-                        <p className="text-sm text-zinc-500 mt-1">
+                        <h3 className="font-semibold text-foreground">{item.itemName}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
                           {item.purchaseOrder.client.name} • {item.purchaseOrder.poNumber}
                         </p>
                         <div className="flex items-center gap-4 mt-2">
                           <span className="text-sm">
-                            <span className="text-zinc-400">Total:</span>{' '}
+                            <span className="text-muted-foreground">Total:</span>{' '}
                             <span className="font-medium">{item.quantityTotal} {item.quantityUnit}</span>
                           </span>
                           {isPartial && (
                             <span className="text-sm">
-                              <span className="text-zinc-400">Terkirim:</span>{' '}
+                              <span className="text-muted-foreground">Terkirim:</span>{' '}
                               <span className="font-medium text-emerald-600">
                                 {item.quantityDelivered} {item.quantityUnit}
                               </span>
                             </span>
                           )}
                           <span className="text-sm">
-                            <span className="text-zinc-400">Sisa:</span>{' '}
+                            <span className="text-muted-foreground">Sisa:</span>{' '}
                             <span className="font-medium text-blue-600">
                               {remaining} {item.quantityUnit}
                             </span>
@@ -179,7 +179,7 @@ export default function DeliveriesPage() {
 
         {/* All Undelivered Items */}
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-zinc-900">Semua Item Tertunda</h2>
+          <h2 className="text-lg font-semibold text-foreground">Semua Item Tertunda</h2>
           
           <div className="grid gap-3">
             {items
@@ -187,16 +187,16 @@ export default function DeliveriesPage() {
               .map((item) => (
                 <div
                   key={item.id}
-                  className="bg-zinc-50 rounded-xl p-4 border border-zinc-200 opacity-75"
+                  className="bg-muted rounded-xl p-4 border border-border opacity-75"
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-medium text-zinc-700">{item.itemName}</h3>
-                      <p className="text-xs text-zinc-400">
+                      <h3 className="font-medium text-foreground">{item.itemName}</h3>
+                      <p className="text-xs text-muted-foreground">
                         {item.purchaseOrder.client.name} • {item.purchaseOrder.poNumber}
                       </p>
                     </div>
-                    <span className="text-xs text-zinc-400 bg-zinc-100 px-2 py-1 rounded">
+                    <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
                       QC Belum Selesai
                     </span>
                   </div>
@@ -272,13 +272,13 @@ function DeliveryModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
-        <h2 className="text-xl font-bold text-zinc-900 mb-1">Buat Pengiriman</h2>
-        <p className="text-zinc-500 text-sm mb-6">{item.itemName}</p>
+      <div className="bg-card rounded-2xl p-6 w-full max-w-md shadow-2xl">
+        <h2 className="text-xl font-bold text-foreground mb-1">Buat Pengiriman</h2>
+        <p className="text-muted-foreground text-sm mb-6">{item.itemName}</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Jumlah yang Dikirim
             </label>
             <input
@@ -287,48 +287,48 @@ function DeliveryModal({
               max={remaining}
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              className="w-full h-12 px-4 rounded-xl border border-zinc-300 focus:border-zinc-900 focus:outline-none"
+              className="w-full h-12 px-4 rounded-xl border border-border focus:border-primary focus:outline-none"
               required
             />
-            <p className="text-xs text-zinc-400 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               Maks: {remaining} {item.quantityUnit}
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Tanggal Pengiriman
             </label>
             <input
               type="date"
               value={deliveryDate}
               onChange={(e) => setDeliveryDate(e.target.value)}
-              className="w-full h-12 px-4 rounded-xl border border-zinc-300 focus:border-zinc-900 focus:outline-none"
+              className="w-full h-12 px-4 rounded-xl border border-border focus:border-primary focus:outline-none"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Nomor Surat Jalan
             </label>
             <input
               type="text"
               value={suratJalan}
               onChange={(e) => setSuratJalan(e.target.value)}
-              className="w-full h-12 px-4 rounded-xl border border-zinc-300 focus:border-zinc-900 focus:outline-none"
+              className="w-full h-12 px-4 rounded-xl border border-border focus:border-primary focus:outline-none"
               placeholder="SJ-2026-XXX"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-zinc-700 mb-1">
+            <label className="block text-sm font-medium text-foreground mb-1">
               Catatan
             </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full h-20 px-4 py-2 rounded-xl border border-zinc-300 focus:border-zinc-900 focus:outline-none resize-none"
+              className="w-full h-20 px-4 py-2 rounded-xl border border-border focus:border-primary focus:outline-none resize-none"
               placeholder="Catatan pengiriman..."
             />
           </div>
@@ -338,7 +338,7 @@ function DeliveryModal({
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="flex-1 h-12 border border-zinc-300 text-zinc-700 rounded-xl font-medium hover:bg-zinc-50"
+              className="flex-1 h-12 border border-border text-foreground rounded-xl font-medium hover:bg-muted"
             >
               Batal
             </button>

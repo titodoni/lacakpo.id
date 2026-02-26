@@ -7,7 +7,7 @@ import SearchPageContent from './SearchPageContent';
 function SearchPageSkeleton() {
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <p className="text-zinc-500">Memuat...</p>
+      <p className="text-muted-foreground">Memuat...</p>
     </div>
   );
 }
