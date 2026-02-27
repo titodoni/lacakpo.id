@@ -17,6 +17,7 @@ const PALETTE = {
 
 interface Item {
   id: string;
+  poId: string;
   name: string;
   specification: string | null;
   poNumber: string;

@@ -9,7 +9,7 @@ interface Item {
   name: string;
   specification: string | null;
   poNumber: string;
-  openIssues: { id: string; title: string; priority: 'low' | 'medium' | 'high'; status: 'open' | 'resolved' }[];
+  openIssues: { id: string; title: string; priority: string; status: string }[];
 }
 
 export default function ProblemsTable({ items }: { items: Item[] }) {
@@ -31,8 +31,8 @@ export default function ProblemsTable({ items }: { items: Item[] }) {
         // Create properly formatted issues for IssueBadge
         const formattedIssues = item.openIssues.map((issue) => ({
           id: issue.id || item.id + issue.priority,
-          priority: issue.priority,
-          status: issue.status,
+          priority: issue.priority as 'high' | 'medium' | 'low',
+          status: issue.status as 'open' | 'resolved',
         }));
 
         return (

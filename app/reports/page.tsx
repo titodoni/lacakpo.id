@@ -17,7 +17,7 @@ async function getReportData() {
     include: {
       purchaseOrder: true,
       tracks: { select: { department: true, progress: true } },
-      issues: { select: { status: true, priority: true, title: true } },
+      issues: { select: { id: true, status: true, priority: true, title: true } },
     },
   });
 
@@ -75,6 +75,7 @@ async function getReportData() {
   // Format response
   const formatItem = (item: (typeof items)[0]) => ({
     id: item.id,
+    poId: item.poId,
     name: item.itemName,
     specification: item.specification,
     poNumber: item.purchaseOrder.poNumber,

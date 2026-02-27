@@ -27,7 +27,7 @@ export async function GET() {
         select: { department: true, progress: true },
       },
       issues: {
-        select: { status: true, priority: true, title: true },
+        select: { id: true, status: true, priority: true, title: true },
         where: { status: 'open' },
       },
     },

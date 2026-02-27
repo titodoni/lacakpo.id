@@ -69,6 +69,7 @@ interface ReportData {
 
 interface ItemDetail {
   id: string;
+  poId: string;
   name: string;
   specification: string | null;
   poNumber: string;
@@ -79,7 +80,7 @@ interface ItemDetail {
   deliveredAt: string | null;
   progress: number;
   tracks: { department: string; progress: number }[];
-  openIssues: { title: string; priority: string }[];
+  openIssues: { id: string; title: string; priority: string; status: string }[];
 }
 
 export function ReportsDashboard({ initialData }: { initialData: ReportData }) {
