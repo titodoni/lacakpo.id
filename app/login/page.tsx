@@ -251,9 +251,9 @@ export default function LoginPage() {
                   disabled={!selectedDept || isLoading}
                   className="w-full h-12 px-4 pr-10 rounded-xl border border-input bg-background
                     transition-all appearance-none focus:ring-2 focus:ring-ring focus:border-transparent
-                    disabled:opacity-50"
+                    disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <option value="">{selectedDept ? 'Pilih user' : 'Pilih departemen dulu'}</option>
+                  <option value="">{selectedDept ? 'Pilih user' : 'Pilih departemen dulu ↑'}</option>
                   {usersInDept.map((user) => (
                     <option key={user.id} value={user.username}>
                       {user.name}
@@ -273,6 +273,7 @@ export default function LoginPage() {
                 type="password"
                 inputMode="numeric"
                 pattern="[0-9]*"
+                autoComplete="one-time-code"
                 maxLength={5}
                 name="pin"
                 data-testid="pin-input"

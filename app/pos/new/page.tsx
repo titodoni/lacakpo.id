@@ -26,7 +26,10 @@ export default function NewPOPage() {
   const [clientPoNumber, setClientPoNumber] = useState('');
   const [clientName, setClientName] = useState('');
   const [poDate, setPoDate] = useState(new Date().toISOString().split('T')[0]);
-  const [deliveryDeadline, setDeliveryDeadline] = useState('');
+  const [deliveryDeadline, setDeliveryDeadline] = useState(
+    new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  );
+  const [clients, setClients] = useState<Array<{ id: string; name: string }>>([]);
   const [notes, setNotes] = useState('');
   const [isUrgent, setIsUrgent] = useState(false);
   const [isVendorJob, setIsVendorJob] = useState(false);
@@ -46,6 +49,18 @@ export default function NewPOPage() {
       router.push('/pos');
     }
   }, [user, userLoading, router]);
+
+  // Fetch clients on mount for autocomplete
+  useEffect(() => {
+    fetch('/api/clients')
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setClients(data);
+        }
+      })
+      .catch((err) => console.error('Failed to fetch clients:', err));
+  }, []);
 
   const addItem = () => {
     setItems([
@@ -221,13 +236,19 @@ export default function NewPOPage() {
                   required
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
+                  list="client-list"
                   className="w-full h-11 sm:h-12 px-3 sm:px-4 rounded-xl border border-input bg-background
                     focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring transition-all"
                   placeholder="Masukkan nama perusahaan klien"
                   disabled={isLoading}
                 />
+                <datalist id="client-list">
+                  {clients.map((client) => (
+                    <option key={client.id} value={client.name} />
+                  ))}
+                </datalist>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Klien baru akan dibuat jika belum ada
+                  Klien baru akan dibuat otomatis jika nama belum ada di sistem
                 </p>
               </div>
 
@@ -256,6 +277,7 @@ export default function NewPOPage() {
                   type="date"
                   value={deliveryDeadline}
                   onChange={(e) => setDeliveryDeadline(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
                   className="w-full h-11 sm:h-12 px-3 sm:px-4 rounded-xl border border-input bg-background
                     focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring transition-all"
                   disabled={isLoading}
@@ -442,6 +464,7 @@ export default function NewPOPage() {
                           focus:border-primary focus:outline-none focus:ring-2 focus:ring-ring transition-all"
                         placeholder="Jumlah"
                         min="1"
+                        max="999999"
                         disabled={isLoading}
                       />
                       <select

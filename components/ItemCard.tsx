@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import Link from 'next/link';
 import { cn, canUpdateTrack } from '@/lib/utils';
 import { IssueBadge } from './IssueBadge';
-import { AlertTriangle, X, AlertCircle, Info, CheckCircle2, User } from 'lucide-react';
+import { AlertTriangle, X, AlertCircle, Info, CheckCircle2, User, Pencil, Clock } from 'lucide-react';
 
 // Custom debounce hook
 function useDebouncedCallback<T extends (...args: any[]) => void>(
@@ -499,6 +499,30 @@ export const ItemCard = memo(function ItemCard({
     return `${daysLeft}h lagi`;
   };
 
+  // Helper function for deadline display with visual urgency indicators
+  // Note: 'h' means 'hari' (days), not hours
+  function getDeadlineDisplay(deadline: string | null): { label: string; className: string } {
+    if (!deadline) {
+      return { label: 'Tidak ada deadline', className: 'text-muted-foreground' };
+    }
+
+    const deadlineDate = new Date(deadline);
+    const now = new Date();
+    const diffMs = deadlineDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      // Past deadline
+      return { label: `${Math.abs(diffDays)}h TELAT`, className: 'text-red-600 font-bold' };
+    } else if (diffDays <= 48) {
+      // 1-48 days remaining
+      return { label: `${diffDays}h lagi`, className: 'text-orange-500 font-semibold' };
+    } else {
+      // More than 48 days remaining
+      return { label: `${diffDays}h lagi`, className: 'text-emerald-600' };
+    }
+  }
+
   const shouldNavigate = navigateOnClick || !canEdit;
 
   const handleIssueClick = (e: React.MouseEvent) => {
@@ -522,6 +546,15 @@ export const ItemCard = memo(function ItemCard({
       default:
         return 'bg-card border-border';
     }
+  };
+
+  // Urgent item styles - adds left border and subtle red tint
+  const poIsUrgent = item.purchaseOrder.isUrgent;
+  const getUrgentStyles = () => {
+    if (poIsUrgent) {
+      return 'border-l-4 border-l-destructive bg-destructive/5';
+    }
+    return '';
   };
 
   const getStatusBadge = () => {
@@ -574,7 +607,14 @@ export const ItemCard = memo(function ItemCard({
         </span>
 
         {/* Status Badge */}
-        {cardStatus !== 'normal' && getStatusBadge()}
+        {cardStatus !== 'normal' && (
+          <span className="inline-flex items-center gap-1.5">
+            {getStatusBadge()}
+            {poIsUrgent && (
+              <span className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
+            )}
+          </span>
+        )}
 
         {/* Vendor Badge */}
         {isVendorJob && (
@@ -607,223 +647,170 @@ export const ItemCard = memo(function ItemCard({
             </button>
           )}
           
-          {daysLeft !== null && (
-            <span className="text-xs sm:text-sm font-bold px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg whitespace-nowrap text-white bg-primary"
-            >
-              {getDaysLeftText()}
-            </span>
+          {item.purchaseOrder.deliveryDeadline && (
+            (() => {
+              const { label, className } = getDeadlineDisplay(item.purchaseOrder.deliveryDeadline);
+              return (
+                <span className={cn('inline-flex items-center gap-1 text-xs sm:text-sm', className)}>
+                  <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  {label}
+                </span>
+              );
+            })()
           )}
         </div>
       </div>
 
       <div className="px-2 sm:px-3 pb-2 sm:pb-3 bg-card">
-        {/* Departments - Mobile: horizontal scroll or wrap */}
-        <div className="flex flex-wrap items-center gap-x-2 sm:gap-x-3 gap-y-1 text-xs sm:text-sm mb-2 text-foreground">
-          {sortedTracks.map((track, i) => (
-            <span key={track.id} className="flex items-center shrink-0">
-              <span className="font-medium">{deptLabels[track.department]}</span>
-              <span className="ml-1 font-bold font-mono text-xs sm:text-sm text-primary">
-                {track.progress}%
-              </span>
-              {i < sortedTracks.length - 1 && <span className="ml-2 sm:ml-3 text-accent">-</span>}
-            </span>
-          ))}
-        </div>
-
-        {/* User's Track - Full Width Progress */}
-        {myTrack && (
-          <div className="pt-2 border-t border-accent/30" onClick={(e) => e.stopPropagation()}>
-            {isEditing ? (
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs sm:text-sm font-bold text-foreground">
-                    {userDept ? deptLabels[userDept] : ''}
-                  </span>
-                  <span className="text-lg sm:text-xl font-black font-mono text-foreground">
-                    {editValue}%
-                  </span>
-                </div>
-                
-                {/* Full Width Slider */}
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="5"
-                  value={editValue}
-                  onChange={(e) => setEditValue(parseInt(e.target.value))}
-                  className="w-full h-2 sm:h-2.5 rounded-full appearance-none cursor-pointer mb-2 accent-primary"
-                />
-                
-                <div className="grid grid-cols-5 gap-1 sm:gap-1.5 mb-2">
-                  {[0, 25, 50, 75, 100].map((q) => (
-                    <button
-                      key={q}
-                      onClick={() => setEditValue(q)}
-                      className="py-1 sm:py-1.5 text-[10px] sm:text-xs font-bold rounded-lg transition-all bg-muted text-foreground hover:bg-primary hover:text-primary-foreground"
-                    >
-                      {q}%
-                    </button>
-                  ))}
-                </div>
-                
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setIsEditing(false)}
-                    className="flex-1 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold rounded-lg transition-colors bg-muted text-foreground hover:bg-muted/80"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    onClick={() => handleUpdateProgress(myTrack.id, editValue)}
-                    disabled={editValue === displayProgress || isSaving}
-                    className="flex-1 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold rounded-lg transition-all bg-primary text-primary-foreground disabled:opacity-50"
-                  >
-                    {isSaving ? '...' : 'Update'}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div 
-                onClick={handleProgressClick}
-                className={canEdit ? 'cursor-pointer' : ''}
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs sm:text-sm font-bold text-foreground">
-                    {userDept ? deptLabels[userDept] : ''}
-                  </span>
-                  <span className="text-lg sm:text-xl font-black font-mono text-primary">
-                    {displayProgress}%
-                  </span>
-                </div>
-                {/* Full Width Progress Bar */}
-                <div className="h-1.5 sm:h-2 rounded-full overflow-hidden bg-muted">
+        {/* SECTION A: Own Department Track (tappable) */}
+        {myTrack && canEdit && !isEditing && (
+          <div className="mb-3" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={handleProgressClick}
+              className="w-full min-h-[64px] px-4 py-3 rounded-xl bg-primary/10 hover:bg-primary/20 active:scale-[0.98] transition-all flex items-center justify-between gap-3 cursor-pointer"
+            >
+              <div className="flex-1">
+                <span className="text-2xl font-bold text-primary">{displayProgress}%</span>
+                {/* Progress bar below */}
+                <div className="h-2 rounded-full bg-muted mt-2 overflow-hidden">
                   <div 
                     className="h-full rounded-full transition-all duration-500 bg-primary"
                     style={{ width: `${displayProgress}%` }} 
                   />
                 </div>
-                {canEdit && (
-                  <div className="flex items-center justify-between mt-1">
-                    <p className="text-[9px] sm:text-[10px] text-muted-foreground">Klik untuk edit</p>
-                    {savedFeedback && (
-                      <span className="text-[9px] sm:text-[10px] font-bold flex items-center gap-0.5 text-emerald-600">
-                        <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
-                        Tersimpan
-                      </span>
-                    )}
-                    {isSaving && (
-                      <span className="text-[9px] sm:text-[10px] font-medium text-muted-foreground">Menyimpan...</span>
-                    )}
-                  </div>
-                )}
-                
-                {/* Vendor Job Block Message */}
-                {isBlockedByVendor && (
-                  <div className="mt-2 p-1.5 sm:p-2 rounded-lg text-center bg-blue-50">
-                    <p className="text-[10px] sm:text-xs font-medium text-blue-600">
-                      Dikerjakan Vendor: {vendorName}
-                    </p>
-                    <p className="text-[9px] sm:text-[10px] mt-0.5 text-foreground">
-                      Production tidak dapat update
-                    </p>
-                  </div>
-                )}
               </div>
-            )}
+              <Pencil className="w-4 h-4 text-muted-foreground shrink-0" />
+            </button>
           </div>
         )}
 
-        {/* Delivery Section for Delivery Users */}
-        {isDeliveryUser && (
-          <div className="pt-2 border-t border-accent/30 mt-2" onClick={(e) => e.stopPropagation()}>
-            {isEditingDelivery ? (
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-xs sm:text-sm font-bold text-foreground">
-                    Qty Delivered
-                  </span>
-                  <span className="text-lg sm:text-xl font-black font-mono text-foreground">
-                    {deliveryValue} / {item.quantityTotal}
-                  </span>
-                </div>
-                
-                <input
-                  type="range"
-                  min="0"
-                  max={item.quantityTotal}
-                  step="1"
-                  value={deliveryValue}
-                  onChange={(e) => setDeliveryValue(parseInt(e.target.value))}
-                  className="w-full h-2 sm:h-2.5 rounded-full appearance-none cursor-pointer mb-2 accent-primary"
-                />
-                
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setIsEditingDelivery(false)}
-                    className="flex-1 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold rounded-lg transition-colors bg-muted text-foreground hover:bg-muted/80"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    onClick={() => handleUpdateDelivery(deliveryValue)}
-                    disabled={deliveryValue === displayDelivered || isSaving}
-                    className="flex-1 py-1.5 sm:py-2 text-[10px] sm:text-xs font-bold rounded-lg transition-all bg-primary text-primary-foreground disabled:opacity-50"
-                  >
-                    {isSaving ? '...' : 'Update'}
-                  </button>
-                </div>
+        {/* SECTION A: Delivery User (special case - no track) */}
+        {isDeliveryUser && canEdit && !isEditingDelivery && (
+          <div className="mb-3" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={handleProgressClick}
+              className="w-full min-h-[64px] px-4 py-3 rounded-xl bg-primary/10 hover:bg-primary/20 active:scale-[0.98] transition-all flex items-center justify-between gap-3 cursor-pointer"
+            >
+              <div className="flex-1">
+                <span className="text-2xl font-bold text-primary">{displayDelivered}</span>
+                <span className="text-sm text-muted-foreground">/{item.quantityTotal}</span>
               </div>
-            ) : (
-              <div 
-                onClick={handleProgressClick}
-                className="cursor-pointer"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs sm:text-sm font-bold text-foreground">
-                    Qty Delivered
-                  </span>
-                  <span className="text-lg sm:text-xl font-black font-mono text-primary">
-                    {displayDelivered} / {item.quantityTotal}
-                  </span>
-                </div>
-                <div className="h-1.5 sm:h-2 rounded-full overflow-hidden bg-muted">
-                  <div 
-                    className="h-full rounded-full transition-all duration-500 bg-primary"
-                    style={{ width: `${(displayDelivered / item.quantityTotal) * 100}%` }} 
-                  />
-                </div>
-                <div className="flex items-center justify-between mt-1">
-                  <p className="text-[9px] sm:text-[10px] text-muted-foreground">Klik untuk edit</p>
-                  {savedFeedback && (
-                    <span className="text-[9px] sm:text-[10px] font-bold flex items-center gap-0.5 text-emerald-600">
-                      <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      Tersimpan
-                    </span>
-                  )}
-                  {isSaving && (
-                    <span className="text-[9px] sm:text-[10px] font-medium text-muted-foreground">Menyimpan...</span>
-                  )}
-                </div>
-              </div>
-            )}
+              <Pencil className="w-4 h-4 text-muted-foreground shrink-0" />
+            </button>
           </div>
         )}
+
+        {/* SECTION A: Edit mode for track */}
+        {myTrack && isEditing && (
+          <div className="mb-3" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-foreground">{deptLabels[userDept || '']}</span>
+              <span className="text-xl font-bold text-foreground">{editValue}%</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="5"
+              value={editValue}
+              onChange={(e) => setEditValue(parseInt(e.target.value))}
+              className="w-full h-2 rounded-full appearance-none cursor-pointer mb-3 accent-primary"
+            />
+            <div className="grid grid-cols-5 gap-2 mb-3">
+              {[0, 25, 50, 75, 100].map((q) => (
+                <button
+                  key={q}
+                  onClick={() => setEditValue(q)}
+                  className="py-2 text-xs font-bold rounded-lg transition-all bg-muted text-foreground hover:bg-primary hover:text-primary-foreground"
+                >
+                  {q}%
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setIsEditing(false)}
+                className="flex-1 py-2 text-xs font-bold rounded-lg transition-colors bg-muted text-foreground hover:bg-muted/80"
+              >
+                Batal
+              </button>
+              <button
+                onClick={() => handleUpdateProgress(myTrack.id, editValue)}
+                disabled={editValue === displayProgress || isSaving}
+                className="flex-1 py-2 text-xs font-bold rounded-lg transition-all bg-primary text-primary-foreground disabled:opacity-50"
+              >
+                {isSaving ? '...' : 'Update'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* SECTION A: Edit mode for delivery */}
+        {isDeliveryUser && isEditingDelivery && (
+          <div className="mb-3" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-foreground">Qty Delivered</span>
+              <span className="text-xl font-bold text-foreground">{deliveryValue}</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max={item.quantityTotal}
+              step="1"
+              value={deliveryValue}
+              onChange={(e) => setDeliveryValue(parseInt(e.target.value))}
+              className="w-full h-2 rounded-full appearance-none cursor-pointer mb-3 accent-primary"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => setIsEditingDelivery(false)}
+                className="flex-1 py-2 text-xs font-bold rounded-lg transition-colors bg-muted text-foreground hover:bg-muted/80"
+              >
+                Batal
+              </button>
+              <button
+                onClick={() => handleUpdateDelivery(deliveryValue)}
+                disabled={deliveryValue === displayDelivered || isSaving}
+                className="flex-1 py-2 text-xs font-bold rounded-lg transition-all bg-primary text-primary-foreground disabled:opacity-50"
+              >
+                {isSaving ? '...' : 'Update'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* SECTION B: Other Departments (read-only, one line) */}
+        <div className="flex flex-wrap gap-x-2 gap-y-1 text-xs text-muted-foreground">
+          {sortedTracks
+            .filter((track) => track.department !== userDept)
+            .map((track, index, arr) => {
+              const label = deptLabels[track.department] || track.department;
+              let display = '';
+              if (track.progress === 100) {
+                display = `${label} ✅`;
+              } else if (track.progress > 0) {
+                display = `${label} ${track.progress}%`;
+              } else {
+                display = `${label} –`;
+              }
+              return (
+                <span key={track.id}>
+                  {display}
+                  {index < arr.length - 1 && <span className="ml-2">·</span>}
+                </span>
+              );
+            })}
+        </div>
 
         {/* Report Issue Button */}
         {canReportIssue && onReportIssue && !isEditing && !isEditingDelivery && (
-          <div className="mt-2 flex justify-end" onClick={(e) => e.stopPropagation()}>
+          <div className="mt-3 flex justify-end" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => onReportIssue(item)}
-              className="flex items-center gap-1 px-2 sm:px-2.5 py-1 text-[10px] sm:text-[11px] font-bold rounded-md border border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors"
+              className="flex items-center gap-1 px-2 py-1 text-[10px] font-bold rounded-md border border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors"
             >
-              <AlertTriangle className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-              <span className="hidden sm:inline">Lapor Masalah</span>
-              <span className="sm:hidden">Lapor</span>
+              <AlertTriangle className="w-3 h-3" />
+              <span className="hidden sm:inline">Lapor</span>
             </button>
           </div>
         )}
@@ -852,7 +839,8 @@ export const ItemCard = memo(function ItemCard({
         prefetch={true}
         className={cn(
           "block rounded-xl overflow-hidden transition-all hover:shadow-lg border-2",
-          getCardStyles()
+          getCardStyles(),
+          getUrgentStyles()
         )}
         style={{ textDecoration: 'none' }}
       >
@@ -866,7 +854,8 @@ export const ItemCard = memo(function ItemCard({
       onClick={handleProgressClick}
       className={cn(
         "block rounded-xl overflow-hidden transition-all hover:shadow-lg cursor-pointer border-2",
-        getCardStyles()
+        getCardStyles(),
+        getUrgentStyles()
       )}
     >
       {cardContent}

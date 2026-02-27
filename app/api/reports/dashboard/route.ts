@@ -87,6 +87,7 @@ export async function GET() {
   // Format response
   const formatItem = (item: (typeof items)[0]) => ({
     id: item.id,
+    poId: item.poId,
     name: item.itemName,
     specification: item.specification,
     poNumber: item.purchaseOrder.poNumber,

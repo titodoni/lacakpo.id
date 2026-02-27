@@ -4,9 +4,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useUser } from '@/hooks/useUser';
-import { AlertTriangle, CheckCircle2, Clock, Info } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Clock, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { departmentExplanations } from '@/lib/department-info';
+import { departmentExplanations, getDepartmentMilestones } from '@/lib/department-info';
 import { ItemCard, Item as ItemCardItem } from '@/components/ItemCard';
 import { ReportIssueModal } from '@/components/ReportIssueModal';
 import { useItemsStore, type Item } from '@/store/items-store';
@@ -77,6 +77,7 @@ export function TasksClient({ initialItems, currentUserId }: TasksClientProps) {
   const [completionTab, setCompletionTab] = useState<'ongoing' | 'completed'>('ongoing');
   const [selectedItem, setSelectedItem] = useState<ItemCardItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showMilestones, setShowMilestones] = useState(false);
 
   // Zustand store
   const { items: storeItems, orderedIds, setItems } = useItemsStore();
@@ -278,22 +279,56 @@ export function TasksClient({ initialItems, currentUserId }: TasksClientProps) {
           )}
         </div>
 
-        {/* Department Explanation */}
+        {/* Department Explanation - Expandable with Milestones */}
         {userDept && departmentExplanations[userDept] && (
-          <div className="rounded-2xl p-4 border bg-card border-border">
-            <div className="flex items-start gap-3">
-              <div className="p-2 rounded-lg shrink-0 bg-accent/20">
-                <Info className="w-5 h-5 text-accent-foreground" />
+          <div className="rounded-xl p-3 border bg-primary/10 border-primary/20">
+            <button
+              onClick={() => setShowMilestones(!showMilestones)}
+              className="w-full flex items-start gap-3 text-left"
+            >
+              <div className="p-2 rounded-lg shrink-0 bg-primary/20">
+                <Info className="w-5 h-5 text-primary" />
               </div>
-              <div>
-                <h3 className="font-semibold text-sm mb-1 text-foreground">
-                  Keterangan {departmentExplanations[userDept].title}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {departmentExplanations[userDept].description}
-                </p>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <h3 className="font-semibold text-sm text-foreground">
+                      {departmentExplanations[userDept].title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {departmentExplanations[userDept].description}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-primary shrink-0">
+                    <span className="hidden sm:inline">
+                      {showMilestones ? 'Tutup' : 'Lihat milestone'}
+                    </span>
+                    {showMilestones ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )}
+                  </div>
+                </div>
+                
+                {/* Expanded Milestones List */}
+                {showMilestones && (
+                  <div className="mt-3 pt-3 border-t border-primary/20">
+                    <ul className="space-y-1.5">
+                      {getDepartmentMilestones(userDept).map((milestone, index) => (
+                        <li 
+                          key={index}
+                          className="text-sm text-muted-foreground flex items-start gap-2"
+                        >
+                          <span className="text-primary mt-0.5">•</span>
+                          <span>{milestone}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
-            </div>
+            </button>
           </div>
         )}
 
@@ -328,7 +363,7 @@ export function TasksClient({ initialItems, currentUserId }: TasksClientProps) {
               <>
                 <button
                   onClick={() => setCurrentMonth(prevMonthKey)}
-                  className="flex items-center gap-1 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors bg-muted text-muted-foreground hover:bg-muted/80"
+                  className="flex items-center gap-1 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors bg-muted text-muted-foreground hover:bg-muted/80 min-w-[44px] min-h-[44px]"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -344,7 +379,7 @@ export function TasksClient({ initialItems, currentUserId }: TasksClientProps) {
                 
                 <button
                   onClick={() => setCurrentMonth(nextMonthKey)}
-                  className="flex items-center gap-1 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors bg-muted text-muted-foreground hover:bg-muted/80"
+                  className="flex items-center gap-1 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors bg-muted text-muted-foreground hover:bg-muted/80 min-w-[44px] min-h-[44px]"
                 >
                   <span className="hidden sm:inline">{nextMonthName}</span>
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

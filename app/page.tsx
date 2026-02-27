@@ -25,6 +25,10 @@ interface DashboardData {
   };
   recentActivity: any[];
   urgentItems: any[];
+  openIssuesCount?: number;
+  onTimeDeliveryRate?: number;
+  todayLogsCount?: number;
+  activeItemsCount?: number;
 }
 
 interface PO {
@@ -47,6 +51,13 @@ export default function HomePage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [poList, setPoList] = useState<PO[]>([]);
   const [loading, setLoading] = useState(true);
+  const [menuCounts, setMenuCounts] = useState({
+    tasks: 0,
+    issues: 0,
+    logs: 0,
+    onTimeRate: 0,
+  });
+  const [countsLoading, setCountsLoading] = useState(true);
 
   useEffect(() => {
     if (!userLoading && !user) {
@@ -72,6 +83,7 @@ export default function HomePage() {
       // Admin and managers see dashboard
       fetchDashboard();
       fetchPOList();
+      fetchMenuCounts();
     }
   }, [user, userLoading, router]);
 
@@ -86,6 +98,39 @@ export default function HomePage() {
       console.error('Failed to fetch dashboard:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMenuCounts = async () => {
+    setCountsLoading(true);
+    try {
+      // Fetch active items count (not delivered)
+      const itemsRes = await fetch('/api/items?status=active&isDelivered=false&limit=1');
+      const itemsData = itemsRes.ok ? await itemsRes.json() : { total: 0 };
+
+      // Fetch open issues count
+      const issuesRes = await fetch('/api/issues?status=open&limit=1');
+      const issuesData = issuesRes.ok ? await issuesRes.json() : { total: 0 };
+
+      // Fetch today's logs count
+      const today = new Date().toISOString().split('T')[0];
+      const logsRes = await fetch(`/api/logs?date=${today}&limit=1`);
+      const logsData = logsRes.ok ? await logsRes.json() : { total: 0 };
+
+      // Fetch on-time delivery rate from reports API
+      const reportsRes = await fetch('/api/reports/dashboard');
+      const reportsData = reportsRes.ok ? await reportsRes.json() : { onTimeDeliveryRate: 0 };
+
+      setMenuCounts({
+        tasks: itemsData.total || 0,
+        issues: issuesData.total || 0,
+        logs: logsData.total || 0,
+        onTimeRate: reportsData.onTimeDeliveryRate || 0,
+      });
+    } catch (error) {
+      console.error('Failed to fetch menu counts:', error);
+    } finally {
+      setCountsLoading(false);
     }
   };
 
@@ -146,29 +191,39 @@ export default function HomePage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <QuickActionCard
             title="Tugas"
-            description="Lihat & update tugas"
-            href="/tasks"
+            subtitle="Item aktif"
+            count={menuCounts.tasks}
+            loading={countsLoading}
+            onClick={() => router.push('/tasks')}
             icon={ClipboardList}
             color="bg-blue-50 text-blue-600"
           />
           <QuickActionCard
             title="Masalah"
-            description="Lihat masalah dilaporkan"
-            href="/issues"
+            subtitle="Masalah terbuka"
+            count={menuCounts.issues}
+            loading={countsLoading}
+            isDestructive={menuCounts.issues > 0}
+            onClick={() => router.push('/issues')}
             icon={AlertTriangle}
             color="bg-amber-50 text-amber-600"
           />
           <QuickActionCard
             title="Riwayat"
-            description="Aktivitas terbaru"
-            href="/logs"
+            subtitle="Aktivitas hari ini"
+            count={menuCounts.logs}
+            loading={countsLoading}
+            onClick={() => router.push('/logs')}
             icon={Clock}
             color="bg-purple-50 text-purple-600"
           />
           <QuickActionCard
             title="Statistik"
-            description="Laporan & data"
-            href="/reports"
+            subtitle="On-time delivery"
+            count={menuCounts.onTimeRate}
+            countSuffix="%"
+            loading={countsLoading}
+            onClick={() => router.push('/reports')}
             icon={BarChart3}
             color="bg-emerald-50 text-emerald-600"
           />
@@ -325,27 +380,42 @@ export default function HomePage() {
 
 function QuickActionCard({
   title,
-  description,
-  href,
+  subtitle,
+  count,
+  countSuffix = '',
+  loading,
+  isDestructive,
+  onClick,
   icon: Icon,
   color,
 }: {
   title: string;
-  description: string;
-  href: string;
+  subtitle: string;
+  count: number;
+  countSuffix?: string;
+  loading: boolean;
+  isDestructive?: boolean;
+  onClick: () => void;
   icon: React.ElementType;
   color: string;
 }) {
   return (
-    <a
-      href={href}
-      className="block bg-card rounded-2xl p-5 border border-border hover:border-muted-foreground/50 transition-colors"
+    <button
+      onClick={onClick}
+      className="w-full text-left bg-card rounded-2xl p-5 border border-border hover:border-muted-foreground/50 transition-colors cursor-pointer"
     >
       <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center mb-3`}>
         <Icon className="w-5 h-5" />
       </div>
-      <h3 className="font-semibold text-foreground">{title}</h3>
-      <p className="text-sm text-muted-foreground mt-1">{description}</p>
-    </a>
+      {loading ? (
+        <div className="h-8 w-16 bg-muted rounded animate-pulse mb-1" />
+      ) : (
+        <p className={`text-2xl font-bold ${isDestructive ? 'text-destructive' : 'text-foreground'}`}>
+          {count}{countSuffix}
+        </p>
+      )}
+      <h3 className="font-semibold text-foreground text-sm">{title}</h3>
+      <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
+    </button>
   );
 }

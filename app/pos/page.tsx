@@ -60,6 +60,45 @@ function getDeliveryStatus(poDate: Date, deliveryDeadline: Date | null) {
   };
 }
 
+// Get deadline display in hours with visual urgency indicators
+function getDeadlineDisplayInHours(deliveryDeadline: Date | null): { 
+  label: string; 
+  className: string;
+  isOverdue: boolean;
+} {
+  if (!deliveryDeadline) {
+    return { label: '', className: '', isOverdue: false };
+  }
+  
+  const now = new Date();
+  const deadline = new Date(deliveryDeadline);
+  const diffMs = deadline.getTime() - now.getTime();
+  const diffHours = Math.ceil(diffMs / (1000 * 60 * 60));
+  
+  if (diffHours < 0) {
+    // Past deadline: "Xh TELAT" in red bold
+    return { 
+      label: `${Math.abs(diffHours)}h TELAT`, 
+      className: 'text-red-600 font-bold',
+      isOverdue: true 
+    };
+  } else if (diffHours <= 24) {
+    // Less than 24h remaining: "Xh lagi" in orange semibold
+    return { 
+      label: `${diffHours}h lagi`, 
+      className: 'text-orange-500 font-semibold',
+      isOverdue: false 
+    };
+  } else {
+    // More than 24h remaining: "Xh lagi" in emerald
+    return { 
+      label: `${diffHours}h lagi`, 
+      className: 'text-emerald-600',
+      isOverdue: false 
+    };
+  }
+}
+
 export default async function POsPage() {
   const session = await getSession();
   
@@ -162,6 +201,7 @@ export default async function POsPage() {
           <div className="grid gap-4">
             {sortedPOs.map((po) => {
               const deliveryStatus = getDeliveryStatus(po.poDate, po.deliveryDeadline);
+              const deadlineDisplay = getDeadlineDisplayInHours(po.deliveryDeadline);
               const firstItem = po.items[0];
               const itemCount = po.items.length;
               
@@ -169,7 +209,9 @@ export default async function POsPage() {
                 <a
                   key={po.id}
                   href={`/pos/${po.id}`}
-                  className="block bg-card rounded-2xl p-5 border border-border hover:border-border transition-all hover:shadow-sm"
+                  className={`block bg-card rounded-2xl p-5 border border-border hover:border-border transition-all hover:shadow-sm ${
+                    deadlineDisplay.isOverdue ? 'border-l-4 border-l-red-500' : ''
+                  }`}
                 >
                   <div className="flex items-start justify-between gap-4">
                     {/* Left: Item Info (Main Focus) */}
@@ -272,12 +314,8 @@ export default async function POsPage() {
                       
                       {/* Delivery Date */}
                       {po.deliveryDeadline && (
-                        <p className="text-xs text-muted-foreground">
-                          Jatuh tempo: {new Date(po.deliveryDeadline).toLocaleDateString('id-ID', {
-                            day: '2-digit',
-                            month: 'short',
-                            year: '2-digit'
-                          })}
+                        <p className={`text-xs ${deadlineDisplay.className || 'text-muted-foreground'}`}>
+                          {deadlineDisplay.label}
                         </p>
                       )}
                       
