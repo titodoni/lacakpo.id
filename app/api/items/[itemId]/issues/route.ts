@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
+import { triggerPusherEvent } from '@/lib/pusher';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,9 +67,10 @@ export async function POST(
       );
     }
 
-    // Check if item exists
+    // Check if item exists with PO info
     const item = await prisma.item.findUnique({
       where: { id: itemId },
+      include: { purchaseOrder: true },
     });
 
     if (!item) {
@@ -77,6 +79,9 @@ export async function POST(
         { status: 404 }
       );
     }
+    
+    // Get user's department from session
+    const userDepartment = session.department || 'Unknown';
 
     const issue = await prisma.issue.create({
       data: {
@@ -92,6 +97,30 @@ export async function POST(
         },
       },
     });
+
+    // Trigger real-time sync event for new issue
+    try {
+      await triggerPusherEvent('po-channel', 'issue-created', {
+        type: 'issue-created',
+        itemId: item.id,
+        itemName: item.itemName,
+        poNumber: item.purchaseOrder?.poNumber || 'Unknown',
+        actorName: session.name,
+        issue: {
+          id: issue.id,
+          title: issue.title,
+          priority: issue.priority,
+          status: 'open',
+          creator: {
+            id: session.userId,
+            name: session.name,
+            role: session.role,
+          },
+        },
+      });
+    } catch (pusherError) {
+      console.error('Pusher trigger failed for issue creation:', pusherError);
+    }
 
     return NextResponse.json({ issue }, { status: 201 });
   } catch (error) {

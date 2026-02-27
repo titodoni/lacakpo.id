@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { triggerPusherEvent } from '@/lib/pusher';
 
 export const dynamic = 'force-dynamic';
 
@@ -167,6 +168,65 @@ export async function POST(req: NextRequest) {
         },
       },
     });
+
+    // Fetch full item data with tracks for real-time sync
+    const itemsWithFull = await prisma.item.findMany({
+      where: { poId: po.id },
+      include: {
+        tracks: { include: { updater: { select: { name: true } } } },
+        issues: true,
+        purchaseOrder: { include: { client: { select: { name: true } } } },
+      }
+    });
+
+    // Trigger real-time sync event for new PO
+    try {
+      await triggerPusherEvent('po-channel', 'po-created', {
+        type: 'po-created',
+        poNumber: po.poNumber,
+        clientName: client.name,
+        actorName: session.name,
+        items: itemsWithFull.map(item => ({
+          id: item.id,
+          po_id: item.poId,
+          item_name: item.itemName,
+          specification: item.specification,
+          quantity_total: item.quantityTotal,
+          quantity_unit: item.quantityUnit,
+          quantity_delivered: item.quantityDelivered,
+          is_delivered: item.isDelivered,
+          delivered_at: item.deliveredAt?.toISOString() || null,
+          tracks: item.tracks.map(t => ({
+            id: t.id,
+            department: t.department,
+            progress: t.progress,
+            updated_by: t.updatedBy,
+            updated_at: t.updatedAt?.toISOString() || null,
+            last_note: t.lastNote,
+            updatedByUser: t.updater || null,
+          })),
+          issues: item.issues.map(i => ({
+            id: i.id,
+            title: i.title,
+            priority: i.priority,
+            status: i.status,
+          })),
+          po: {
+            id: item.purchaseOrder.id,
+            po_number: item.purchaseOrder.poNumber,
+            po_date: item.purchaseOrder.poDate?.toISOString() || null,
+            delivery_deadline: item.purchaseOrder.deliveryDeadline?.toISOString() || null,
+            is_urgent: item.purchaseOrder.isUrgent,
+            is_vendor_job: item.purchaseOrder.isVendorJob,
+            is_paid: item.purchaseOrder.isPaid,
+            status: item.purchaseOrder.status,
+            client: { name: item.purchaseOrder.client.name },
+          },
+        })),
+      });
+    } catch (pusherError) {
+      console.error('Pusher trigger failed for PO creation:', pusherError);
+    }
 
     return NextResponse.json({ po }, { status: 201 });
   } catch (error) {

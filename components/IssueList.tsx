@@ -52,7 +52,7 @@ export function IssueList({
   const resolvedIssues = issues.filter((i) => i.status === 'resolved');
 
   const canEditIssue = (issue: Issue) => {
-    return issue.creator.id === currentUserId || isAdmin;
+    return issue.creator?.id === currentUserId || isAdmin;
   };
 
   const renderIssue = (issue: Issue) => {
@@ -147,10 +147,12 @@ export function IssueList({
             )}
 
             {/* Creator Info */}
-            <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
-              <User className="w-3 h-3" />
-              <span>Dilaporkan oleh {issue.creator.name}</span>
-            </div>
+            {issue.creator && (
+              <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
+                <User className="w-3 h-3" />
+                <span>Dilaporkan oleh {issue.creator.name}</span>
+              </div>
+            )}
 
             {/* Resolver Info (if resolved) */}
             {isResolved && issue.resolver && (
@@ -165,12 +167,16 @@ export function IssueList({
               </div>
             )}
 
-            {/* Resolve Button */}
-            {!isResolved && (
+            {/* Resolve Button - Only for creator or admin */}
+            {!isResolved && canEdit && (
               <button
-                onClick={() => onResolve(issue.id)}
-                className="mt-3 w-full py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 active:scale-[0.98] transition-all"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onResolve(issue.id);
+                }}
+                className="mt-3 w-full py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
               >
+                <CheckCircle2 className="w-4 h-4" />
                 Tandai Selesai
               </button>
             )}

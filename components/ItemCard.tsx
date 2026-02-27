@@ -43,11 +43,11 @@ export interface Issue {
   createdAt: string;
   updatedAt?: string;
   resolvedAt?: string | null;
-  creator: {
+  creator?: {
     id: string;
     name: string;
     role?: string;
-  };
+  } | null;
   resolver?: {
     id: string;
     name: string;
@@ -204,10 +204,12 @@ function IssuesPopup({
             {issue.description && (
               <p className="text-sm text-muted-foreground mt-2">{issue.description}</p>
             )}
-            <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
-              <User className="w-3 h-3" />
-              <span>Dilaporkan oleh {issue.creator.name}</span>
-            </div>
+            {issue.creator && (
+              <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
+                <User className="w-3 h-3" />
+                <span>Dilaporkan oleh {issue.creator.name}</span>
+              </div>
+            )}
             {isResolved && issue.resolver && (
               <div className="flex items-center gap-2 mt-1 text-xs text-emerald-600">
                 <CheckCircle2 className="w-3 h-3" />

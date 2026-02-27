@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { generateSystemMessage, canUpdateTrack } from '@/lib/utils';
+import { triggerPusherEvent } from '@/lib/pusher';
 
 export const dynamic = 'force-dynamic';
 
@@ -96,6 +97,37 @@ export async function POST(
         userNote: userNote || null,
       },
     });
+
+    // Trigger real-time sync event
+    try {
+      const eventData = {
+        type: 'track-updated',
+        itemId: track.itemId,
+        trackDepartment: track.department,
+        oldProgress,
+        newProgress,
+        actorId: session.userId,
+        actorName: session.name,
+        itemName: track.item?.itemName || 'Unknown Item',
+        poNumber: track.item?.purchaseOrder?.poNumber || 'Unknown',
+        track: {
+          id: updatedTrack.id,
+          department: updatedTrack.department,
+          progress: updatedTrack.progress,
+          updated_by: updatedTrack.updatedBy,
+          updated_at: updatedTrack.updatedAt?.toISOString() || null,
+          last_note: updatedTrack.lastNote,
+          updatedByUser: { name: session.name },
+        },
+      };
+      
+      console.log('[API] Sending Pusher event:', eventData);
+      
+      await triggerPusherEvent('po-channel', 'track-updated', eventData);
+    } catch (pusherError) {
+      // Log but don't fail the request if Pusher fails
+      console.error('Pusher trigger failed:', pusherError);
+    }
 
     return NextResponse.json({
       track: updatedTrack,

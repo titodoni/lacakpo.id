@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { triggerPusherEvent } from '@/lib/pusher';
 
 export const dynamic = 'force-dynamic';
 
@@ -70,6 +71,21 @@ export async function POST(
         createdAt: new Date(),
       },
     });
+
+    // Trigger real-time sync event for delivery update
+    try {
+      await triggerPusherEvent('po-channel', 'item-delivered', {
+        type: 'item-delivered',
+        itemId: item.id,
+        itemName: item.itemName,
+        poNumber: item.purchaseOrder?.poNumber || 'Unknown',
+        actorName: user.name,
+        quantityDelivered: newQuantity,
+        isDelivered: isFullyDelivered,
+      });
+    } catch (pusherError) {
+      console.error('Pusher trigger failed for delivery update:', pusherError);
+    }
 
     return NextResponse.json({ item: updatedItem });
   } catch (error) {

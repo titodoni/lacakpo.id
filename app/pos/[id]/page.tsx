@@ -154,9 +154,15 @@ export default function PODetailPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'resolved' }),
       });
-      if (res.ok) await refreshPO();
+      if (res.ok) {
+        await refreshPO();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Gagal menyelesaikan laporan');
+      }
     } catch (error) {
       console.error('Failed to resolve issue:', error);
+      alert('Gagal menyelesaikan laporan');
     }
   };
 
@@ -167,9 +173,15 @@ export default function PODetailPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'open' }),
       });
-      if (res.ok) await refreshPO();
+      if (res.ok) {
+        await refreshPO();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Gagal membuka kembali laporan');
+      }
     } catch (error) {
       console.error('Failed to reopen issue:', error);
+      alert('Gagal membuka kembali laporan');
     }
   };
 

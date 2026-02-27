@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
+import { triggerPusherEvent } from '@/lib/pusher';
 
 export const dynamic = 'force-dynamic';
 
@@ -79,8 +80,38 @@ export async function PATCH(
         resolver: {
           select: { id: true, name: true, role: true },
         },
+        item: {
+          select: { id: true, itemName: true, poId: true },
+          include: {
+            purchaseOrder: { select: { poNumber: true } },
+          },
+        },
       },
     });
+
+    // Trigger real-time sync event for issue resolved/reopened
+    if (status !== undefined) {
+      try {
+        await triggerPusherEvent('po-channel', status === 'resolved' ? 'issue-resolved' : 'issue-created', {
+          type: status === 'resolved' ? 'issue-resolved' : 'issue-created',
+          itemId: updatedIssue.item?.id || '',
+          itemName: updatedIssue.item?.itemName || 'Unknown Item',
+          poNumber: updatedIssue.item?.purchaseOrder?.poNumber || 'Unknown',
+          actorName: session.name,
+          issue: {
+            id: updatedIssue.id,
+            title: updatedIssue.title,
+            priority: updatedIssue.priority,
+            status: status === 'resolved' ? 'resolved' : 'open',
+            creator: updatedIssue.creator,
+            resolver: status === 'resolved' ? updatedIssue.resolver : null,
+            resolvedAt: status === 'resolved' ? updatedIssue.resolvedAt?.toISOString() : null,
+          },
+        });
+      } catch (pusherError) {
+        console.error('Pusher trigger failed for issue status change:', pusherError);
+      }
+    }
 
     return NextResponse.json({ issue: updatedIssue });
   } catch (error) {

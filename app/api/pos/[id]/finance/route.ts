@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { triggerPusherEvent } from '@/lib/pusher';
 
 export const dynamic = 'force-dynamic';
 
@@ -92,6 +93,27 @@ export async function PUT(
         createdAt: new Date(),
       },
     });
+
+    // Trigger real-time sync event for finance update
+    try {
+      const financeAction = isPaid !== undefined 
+        ? (isPaid ? 'paid' : 'unpaid')
+        : isInvoiced !== undefined
+        ? (isInvoiced ? 'invoiced' : 'uninvoiced')
+        : 'updated';
+
+      await triggerPusherEvent('po-channel', 'finance-updated', {
+        type: 'finance-updated',
+        actorName: session.name || session.username,
+        poNumber: po.poNumber,
+        action: financeAction,
+        invoiceNumber: invoiceNumber || updatedPO.invoiceNumber,
+        isPaid: updatedPO.isPaid,
+        isInvoiced: updatedPO.isInvoiced,
+      });
+    } catch (pusherError) {
+      console.error('Pusher trigger failed for finance update:', pusherError);
+    }
 
     return NextResponse.json({
       success: true,

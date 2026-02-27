@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { triggerPusherEvent } from '@/lib/pusher';
 
 export const dynamic = 'force-dynamic';
 
@@ -120,6 +121,11 @@ export async function PUT(
       }
     }
 
+    // Check what changed for real-time sync
+    const statusChanged = status !== undefined && status !== existingPO.status;
+    const urgentChanged = isUrgent !== undefined && isUrgent !== existingPO.isUrgent;
+    const oldStatus = existingPO.status;
+
     // Update PO in transaction
     const updatedPO = await prisma.$transaction(async (tx) => {
       // Update PO
@@ -185,6 +191,36 @@ export async function PUT(
 
       return po;
     });
+
+    // Trigger real-time sync for status change (cancelled/archived)
+    if (statusChanged) {
+      try {
+        await triggerPusherEvent('po-channel', 'po-status-changed', {
+          type: 'po-status-changed',
+          poId: id,
+          poNumber: updatedPO.poNumber,
+          newStatus: status,
+          actorName: session.name,
+        });
+      } catch (pusherError) {
+        console.error('Pusher trigger failed for PO status change:', pusherError);
+      }
+    }
+
+    // Trigger real-time sync for urgent toggle
+    if (urgentChanged) {
+      try {
+        await triggerPusherEvent('po-channel', 'po-urgent-changed', {
+          type: 'po-urgent-changed',
+          poId: id,
+          poNumber: updatedPO.poNumber,
+          isUrgent: isUrgent || false,
+          actorName: session.name,
+        });
+      } catch (pusherError) {
+        console.error('Pusher trigger failed for PO urgent change:', pusherError);
+      }
+    }
 
     return NextResponse.json({
       success: true,
