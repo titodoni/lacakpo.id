@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import "./globals.css";
 import { ThemeProvider } from "@/lib/themes/ThemeProvider";
 import { RealtimeProvider } from "@/components/realtime-provider";
 import { PushNotifications } from "@/components/push-notifications";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Providers } from "./providers";
+import { NavigationProgress } from "@/components/navigation-progress";
 
 export const metadata: Metadata = {
   title: "lacakPO.id - Sistem Tracking PO",
@@ -27,11 +30,16 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased bg-background text-foreground">
-        <ThemeProvider>
-          <RealtimeProvider>
-            {children}
-          </RealtimeProvider>
-        </ThemeProvider>
+        <Suspense fallback={null}>
+          <NavigationProgress />
+        </Suspense>
+        <Providers>
+          <ThemeProvider>
+            <RealtimeProvider>
+              {children}
+            </RealtimeProvider>
+          </ThemeProvider>
+        </Providers>
         {/* Push notifications registration (only works when user is logged in) */}
         <PushNotifications />
         <SpeedInsights />

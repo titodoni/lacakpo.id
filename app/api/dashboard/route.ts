@@ -20,20 +20,50 @@ export async function GET() {
     else if (['cnc_operator', 'milling_operator', 'fab_operator'].includes(userRole)) focusDepartment = 'production';
     else if (['qc'].includes(userRole)) focusDepartment = 'qc';
     
-    // Get all active items with tracks
-    const items = await prisma.item.findMany({
-      where: {
-        purchaseOrder: { status: 'active' },
-        isDelivered: false,
-      },
-      include: {
-        purchaseOrder: {
-          select: { poNumber: true, client: { select: { name: true } }, deliveryDeadline: true },
+    // Fetch all independent data in parallel
+    const [items, posWithItems, recentActivity] = await Promise.all([
+      // Get all active items with tracks
+      prisma.item.findMany({
+        where: {
+          purchaseOrder: { status: 'active' },
+          isDelivered: false,
         },
-        tracks: true,
-      },
-      take: 100,
-    });
+        include: {
+          purchaseOrder: {
+            select: { poNumber: true, client: { select: { name: true } }, deliveryDeadline: true },
+          },
+          tracks: true,
+        },
+        take: 100,
+      }),
+      // Get POs with items - sorted by delivery deadline (closest first)
+      prisma.purchaseOrder.findMany({
+        where: { status: 'active' },
+        include: {
+          client: { select: { name: true } },
+          items: {
+            where: { isDelivered: false },
+            include: { tracks: true },
+            orderBy: { createdAt: 'asc' },
+          },
+        },
+        orderBy: { deliveryDeadline: 'asc' },
+        take: 20,
+      }),
+      // Get recent activity
+      prisma.activityLog.findMany({
+        take: 10,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          item: {
+            select: { itemName: true },
+          },
+          actor: {
+            select: { name: true },
+          },
+        },
+      }),
+    ]);
     
     // Calculate statistics
     const totalItems = items.length;
@@ -67,21 +97,6 @@ export async function GET() {
         ),
       };
     }
-    
-    // Get POs with items - sorted by delivery deadline (closest first)
-    const posWithItems = await prisma.purchaseOrder.findMany({
-      where: { status: 'active' },
-      include: {
-        client: { select: { name: true } },
-        items: {
-          where: { isDelivered: false },
-          include: { tracks: true },
-          orderBy: { createdAt: 'asc' },
-        },
-      },
-      orderBy: { deliveryDeadline: 'asc' },
-      take: 20,
-    });
 
     // Sort POs by urgency (closest deadline first, null deadlines last)
     const sortedPOs = posWithItems
@@ -149,20 +164,6 @@ export async function GET() {
         }
         return a.daysLeft === null ? 1 : -1;
       });
-
-    // Get recent activity
-    const recentActivity = await prisma.activityLog.findMany({
-      take: 10,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        item: {
-          select: { itemName: true },
-        },
-        actor: {
-          select: { name: true },
-        },
-      },
-    });
     
     // Get urgent items (delivery within 7 days)
     const now = new Date();

@@ -63,18 +63,7 @@ export async function POST(
     const oldProgress = track.progress;
     const delta = newProgress - oldProgress;
 
-    // Update track
-    const updatedTrack = await prisma.itemTrack.update({
-      where: { id: trackId },
-      data: {
-        progress: newProgress,
-        updatedBy: session.userId,
-        updatedAt: new Date(),
-        lastNote: userNote || track.lastNote,
-      },
-    });
-
-    // Create activity log
+    // Generate system message before transaction
     const systemMessage = generateSystemMessage(
       session.name,
       track.department,
@@ -82,21 +71,33 @@ export async function POST(
       newProgress
     );
 
-    const activityLog = await prisma.activityLog.create({
-      data: {
-        itemId: track.itemId,
-        trackId: track.id,
-        actorId: session.userId,
-        actorName: session.name,
-        actorRole: session.role,
-        department: track.department,
-        oldProgress,
-        newProgress,
-        delta,
-        systemMessage,
-        userNote: userNote || null,
-      },
-    });
+    // Wrap track update and activity log creation in a transaction
+    const [updatedTrack, activityLog] = await prisma.$transaction([
+      prisma.itemTrack.update({
+        where: { id: trackId },
+        data: {
+          progress: newProgress,
+          updatedBy: session.userId,
+          updatedAt: new Date(),
+          lastNote: userNote || track.lastNote,
+        },
+      }),
+      prisma.activityLog.create({
+        data: {
+          itemId: track.itemId,
+          trackId: track.id,
+          actorId: session.userId,
+          actorName: session.name,
+          actorRole: session.role,
+          department: track.department,
+          oldProgress,
+          newProgress,
+          delta,
+          systemMessage,
+          userNote: userNote || null,
+        },
+      }),
+    ]);
 
     // Trigger real-time sync event
     try {

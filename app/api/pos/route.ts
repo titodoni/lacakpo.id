@@ -75,10 +75,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if PO number already exists
-    const existing = await prisma.purchaseOrder.findUnique({
-      where: { poNumber },
-    });
+    // Check if PO number already exists and fetch all clients in parallel
+    // SQLite doesn't support mode: 'insensitive', so we fetch all clients and filter
+    const [existing, allClients] = await Promise.all([
+      prisma.purchaseOrder.findUnique({
+        where: { poNumber },
+      }),
+      prisma.client.findMany(),
+    ]);
 
     if (existing) {
       return NextResponse.json(
@@ -86,10 +90,6 @@ export async function POST(req: NextRequest) {
         { status: 409 }
       );
     }
-
-    // Find or create client (case-insensitive search for SQLite)
-    // SQLite doesn't support mode: 'insensitive', so we fetch all and filter
-    const allClients = await prisma.client.findMany();
     let client = allClients.find(c => 
       c.name.toLowerCase() === clientName.toLowerCase()
     );

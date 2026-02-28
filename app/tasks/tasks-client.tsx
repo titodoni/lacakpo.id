@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import DashboardLayout from '@/components/DashboardLayout';
 import { useUser } from '@/hooks/useUser';
 import { AlertTriangle, CheckCircle2, Clock, Info, ChevronDown, ChevronUp } from 'lucide-react';
@@ -71,7 +72,6 @@ interface TasksClientProps {
 export function TasksClient({ initialItems, currentUserId }: TasksClientProps) {
   const router = useRouter();
   const { user, loading: userLoading } = useUser();
-  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'todo' | 'in-progress' | 'done'>('all');
   const [currentMonth, setCurrentMonth] = useState<string>(getCurrentMonthString());
   const [completionTab, setCompletionTab] = useState<'ongoing' | 'completed'>('ongoing');
@@ -82,11 +82,27 @@ export function TasksClient({ initialItems, currentUserId }: TasksClientProps) {
   // Zustand store
   const { items: storeItems, orderedIds, setItems } = useItemsStore();
 
-  // Load initial data into store ONCE
+  // Fetch items with React Query (cached, deduplicated, auto-refetch on window focus)
+  const { data: itemsData, isLoading: isFetching } = useQuery({
+    queryKey: ['items', 'tasks'],
+    queryFn: async () => {
+      const res = await fetch('/api/items');
+      if (!res.ok) throw new Error('Failed to fetch items');
+      const data = await res.json();
+      return data.items as Item[];
+    },
+    initialData: initialItems,
+    staleTime: 30 * 1000, // 30 seconds
+    refetchOnWindowFocus: true,
+    refetchInterval: false,
+  });
+
+  // Sync fetched data to Zustand store when it changes
   useEffect(() => {
-    setItems(initialItems);
-    setLoading(false);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    if (itemsData) {
+      setItems(itemsData);
+    }
+  }, [itemsData, setItems]);
 
   // Start real-time sync
   useRealtimeSync(currentUserId);
@@ -224,7 +240,10 @@ export function TasksClient({ initialItems, currentUserId }: TasksClientProps) {
     setIsModalOpen(true);
   };
 
-  if (userLoading || loading) {
+  // Loading state: show loading on initial mount, but not on background refetches
+  const isInitialLoading = userLoading || (isFetching && Object.keys(storeItems).length === 0);
+
+  if (isInitialLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-muted-foreground">Memuat...</p>
