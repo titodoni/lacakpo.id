@@ -3,11 +3,11 @@ import { Suspense } from "react";
 import "./globals.css";
 import { ThemeProvider } from "@/lib/themes/ThemeProvider";
 import { RealtimeProvider } from "@/components/realtime-provider";
-import { PushNotifications } from "@/components/push-notifications";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Providers } from "./providers";
 import { NavigationProgress } from "@/components/navigation-progress";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { NotificationToastContainer } from "@/components/NotificationToast";
 
 export const metadata: Metadata = {
   title: "lacakPO.id - Sistem Tracking PO",
@@ -24,11 +24,6 @@ export default function RootLayout({
       <head>
         {/* Pusher Channels SDK for real-time sync */}
         <script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
-        {/* Pusher Beams SDK for push notifications */}
-        <script 
-          src="https://js.pusher.com/beams/1.0/push-notifications-cdn.js"
-          async
-        />
       </head>
       <body className="antialiased bg-background text-foreground">
         <Suspense fallback={null}>
@@ -43,8 +38,7 @@ export default function RootLayout({
             </ErrorBoundary>
           </ThemeProvider>
         </Providers>
-        {/* Push notifications registration (only works when user is logged in) */}
-        <PushNotifications />
+        <NotificationToastContainer />
         <SpeedInsights />
       </body>
     </html>

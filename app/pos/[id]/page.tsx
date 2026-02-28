@@ -286,20 +286,22 @@ export default function PODetailPage() {
   const isAdmin = user.role === 'super_admin';
   const isFinance = user.role === 'finance';
 
-  const itemsWithIssues = po.items.map(item => ({
-    ...item,
-    purchaseOrder: {
-      id: po.id,
-      poNumber: po.poNumber,
-      client: po.client,
-      deliveryDeadline: po.deliveryDeadline,
-      poDate: po.poDate,
-      isUrgent: po.isUrgent,
-      isVendorJob: po.isVendorJob,
-      vendorName: po.vendorName,
-    },
-    issues: item.issues || itemIssues[item.id] || [],
-  }));
+  const itemsWithIssues = (po.items || [])
+    .filter((item): item is Item => item !== undefined && item !== null)
+    .map(item => ({
+      ...item,
+      purchaseOrder: {
+        id: po.id,
+        poNumber: po.poNumber,
+        client: po.client,
+        deliveryDeadline: po.deliveryDeadline,
+        poDate: po.poDate,
+        isUrgent: po.isUrgent,
+        isVendorJob: po.isVendorJob,
+        vendorName: po.vendorName,
+      },
+      issues: item.issues || itemIssues[item.id] || [],
+    }));
 
   return (
     <DashboardLayout user={userData}>

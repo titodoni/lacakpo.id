@@ -131,8 +131,15 @@ export function TasksClient({ initialItems, currentUserId }: TasksClientProps) {
     return orderedIds
       .map(id => storeItems[id])
       .filter((item): item is Item => item !== undefined && item !== null)
+      .filter((item) => {
+        // Additional safety: ensure required nested objects exist
+        if (!item.id || !item.po || !item.tracks) {
+          console.warn('[tasks-client] Skipping invalid item:', item);
+          return false;
+        }
+        return true;
+      })
       .map(item => {
-        if (!item?.id) return null;
         return {
           ...item,
           itemName: item.item_name,
@@ -149,15 +156,14 @@ export function TasksClient({ initialItems, currentUserId }: TasksClientProps) {
             isVendorJob: item.po.is_vendor_job,
             isPaid: item.po.is_paid || false,
           },
-          tracks: item.tracks.map(t => ({
+          tracks: (item.tracks || []).map(t => ({
             ...t,
             updatedBy: t.updated_by,
             updatedAt: t.updated_at,
             lastNote: t.last_note,
           })),
         };
-      })
-      .filter(Boolean) as unknown as ItemCardItem[];
+      }) as unknown as ItemCardItem[];
   }, [storeItems, orderedIds]);
 
   const departmentFilteredItems = useMemo(() => {

@@ -16,6 +16,7 @@ import {
   Search,
   User
 } from 'lucide-react';
+import { NotificationBell } from './NotificationBell';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -66,11 +67,14 @@ const DashboardLayout = memo(function DashboardLayout({ children, user }: Dashbo
       {/* Desktop Sidebar */}
       <aside className="hidden lg:block fixed left-0 top-0 h-full w-64 bg-sidebar-bg border-r border-sidebar-border z-40">
         <div className="p-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5 text-primary-foreground" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+                <CheckCircle2 className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <h1 className="text-xl font-bold text-sidebar-fg">lacakPO.id</h1>
             </div>
-            <h1 className="text-xl font-bold text-sidebar-fg">lacakPO.id</h1>
+            <NotificationBell />
           </div>
         </div>
 

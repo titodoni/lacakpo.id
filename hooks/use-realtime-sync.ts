@@ -2,6 +2,7 @@
 
 import { useEffect, useCallback, useRef } from 'react';
 import { useItemsStore } from '@/store/items-store';
+import { useNotificationsStore } from '@/store/notifications-store';
 import type { 
   POCreatedEvent, 
   TrackUpdatedEvent, 
@@ -34,120 +35,17 @@ declare global {
   }
 }
 
-// Toast deduplication - prevent duplicate notifications
-const recentToasts = new Map<string, number>();
-const TOAST_DEDUP_WINDOW = 3000; // 3 seconds
-
-function getToastKey(title: string, description?: string): string {
-  return `${title}|${description || ''}`;
-}
-
-function shouldShowToast(title: string, description?: string): boolean {
-  const key = getToastKey(title, description);
-  const now = Date.now();
-  const lastShown = recentToasts.get(key);
-  
-  if (lastShown && now - lastShown < TOAST_DEDUP_WINDOW) {
-    console.log('[Toast] Duplicate prevented:', key);
-    return false;
-  }
-  
-  recentToasts.set(key, now);
-  
-  // Cleanup old entries
-  for (const [k, t] of recentToasts.entries()) {
-    if (now - t > TOAST_DEDUP_WINDOW) {
-      recentToasts.delete(k);
-    }
-  }
-  
-  return true;
-}
-
-// Simple toast implementation
-const showToast = (type: 'info' | 'success' | 'warning', title: string, description?: string, duration = 4000) => {
-  // Deduplication check
-  if (!shouldShowToast(title, description)) {
-    return;
-  }
-  
-  // Create toast container if it doesn't exist
-  let container = document.getElementById('realtime-toast-container');
-  if (!container) {
-    container = document.createElement('div');
-    container.id = 'realtime-toast-container';
-    container.style.cssText = `
-      position: fixed;
-      top: 16px;
-      right: 16px;
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      pointer-events: none;
-    `;
-    document.body.appendChild(container);
-  }
-
-  const toast = document.createElement('div');
-  
-  const colors = {
-    info: { border: '#3b82f6', bg: '#eff6ff' },
-    success: { border: '#10b981', bg: '#ecfdf5' },
-    warning: { border: '#f59e0b', bg: '#fffbeb' },
-  };
-
-  const icons = { info: '🔵', success: '✅', warning: '⚠️' };
-
-  toast.style.cssText = `
-    background: ${colors[type].bg};
-    border-radius: 12px;
-    padding: 14px 18px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    border-left: 4px solid ${colors[type].border};
-    min-width: 300px;
-    max-width: 450px;
-    animation: slideIn 0.3s ease-out;
-    pointer-events: auto;
-    font-family: system-ui, -apple-system, sans-serif;
-  `;
-
-  toast.innerHTML = `
-    <div style="display: flex; align-items: flex-start; gap: 12px;">
-      <span style="font-size: 18px; flex-shrink: 0;">${icons[type]}</span>
-      <div style="flex: 1; min-width: 0;">
-        <div style="font-weight: 600; color: #1f2937; font-size: 14px; line-height: 1.4;">${title}</div>
-        ${description ? `<div style="color: #4b5563; font-size: 13px; margin-top: 6px; line-height: 1.4;">${description}</div>` : ''}
-      </div>
-    </div>
-  `;
-
-  if (!document.getElementById('realtime-toast-styles')) {
-    const style = document.createElement('style');
-    style.id = 'realtime-toast-styles';
-    style.textContent = `
-      @keyframes slideIn {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-      }
-      @keyframes slideOut {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(100%); opacity: 0; }
-      }
-    `;
-    document.head.appendChild(style);
-  }
-
-  container.appendChild(toast);
-
-  setTimeout(() => {
-    toast.style.animation = 'slideOut 0.3s ease-in forwards';
-    setTimeout(() => toast.remove(), 300);
-  }, duration);
+const deptLabelFull: Record<string, string> = {
+  drafting: 'Drafting',
+  purchasing: 'Purchasing',
+  production: 'Produksi',
+  qc: 'QC',
+  delivery: 'Delivery',
 };
 
 export function useRealtimeSync(currentUserId?: string) {
   const { addItems, removeItemsByPoId, updateTrack, updateItem, upsertIssue } = useItemsStore();
+  const { addNotification } = useNotificationsStore();
   
   // Track processed events to prevent duplicates (React StrictMode can cause double-handling)
   const processedEvents = useRef<Set<string>>(new Set());
@@ -170,25 +68,36 @@ export function useRealtimeSync(currentUserId?: string) {
   const handlePOCreated = useCallback((rawData: unknown) => {
     try {
       const data = rawData as POCreatedEvent;
+      
+      // Deduplication: prevent double processing
+      const eventId = `po-created-${data.poNumber}`;
+      if (!markEventProcessed(eventId)) {
+        return;
+      }
+      
       console.log('[Realtime] PO created:', data);
       
       // Inject new item cards at top of everyone's Tasks page
       addItems(data.items);
       
-      showToast('success', `PO Baru: ${data.poNumber}`, 
-        `${data.clientName} · ${data.items.length} item · oleh ${data.actorName}`, 5000);
+      // Add to notification center
+      addNotification({
+        type: 'system',
+        title: `PO Baru: ${data.poNumber}`,
+        message: `${data.clientName} · ${data.items.length} item · oleh ${data.actorName}`,
+      }, eventId);
     } catch (err) {
       console.error('[Pusher] Handler error in po-created:', err);
     }
-  }, [addItems]);
+  }, [addItems, addNotification]);
 
   // ─── TRACK PROGRESS UPDATED ───────────────────────────────────
   const handleTrackUpdated = useCallback((rawData: unknown) => {
     try {
       const data = rawData as TrackUpdatedEvent;
       
-      // Deduplication: create unique event ID
-      const eventId = `track-${data.itemId}-${data.trackDepartment}-${data.newProgress}-${Date.now()}`;
+      // Deduplication: create deterministic event ID (no timestamp!)
+      const eventId = `track-${data.itemId}-${data.trackDepartment}-${data.newProgress}`;
       if (!markEventProcessed(eventId)) {
         console.log('[Realtime] Duplicate track event ignored:', eventId);
         return;
@@ -199,44 +108,63 @@ export function useRealtimeSync(currentUserId?: string) {
       // Only that one progress bar moves
       updateTrack(data.itemId, data.trackDepartment, data.track);
       
-      // Don't show toast to the person who made the update
+      // Don't notify the person who made the update
       if (data.actorId === currentUserId) return;
-      
-      const deptLabel: Record<string, string> = {
-        drafting: 'Draft', 
-        purchasing: 'Purch',
-        production: 'Prod', 
-        qc: 'QC', 
-        delivery: 'Delivery',
-      };
-      
-      showToast('info', `${data.actorName} · ${data.itemName}`, 
-        `${deptLabel[data.trackDepartment] || data.trackDepartment}: ${data.oldProgress}% → ${data.newProgress}%`, 3000);
+
+      // Add to notification center (with deduplication key - no timestamp!)
+      const notifKey = `track-${data.itemId}-${data.trackDepartment}-${data.newProgress}`;
+      addNotification({
+        type: 'progress',
+        title: `${deptLabelFull[data.trackDepartment] || data.trackDepartment} diperbarui`,
+        message: `${data.actorName} mengubah progress ke ${data.newProgress}%`,
+        itemName: data.itemName,
+        poNumber: data.poNumber,
+      }, notifKey);
     } catch (err) {
       console.error('[Pusher] Handler error in track-updated:', err);
     }
-  }, [currentUserId, updateTrack]);
+  }, [currentUserId, updateTrack, addNotification]);
 
   // ─── ISSUE CREATED ────────────────────────────────────────────
   const handleIssueCreated = useCallback((rawData: unknown) => {
     try {
       const data = rawData as IssueEvent;
+      
+      // Deduplication: prevent double processing
+      const eventId = `issue-created-${data.issue.id}`;
+      if (!markEventProcessed(eventId)) {
+        return;
+      }
+      
       console.log('[Realtime] Issue created:', data);
       
       // Issue badge appears on that item card
       upsertIssue(data.itemId, data.issue);
-      
-      showToast('warning', `⚠️ Issue Baru: ${data.issue.title}`, 
-        `${data.itemName} · ${data.poNumber} · oleh ${data.actorName}`, 5000);
+
+      // Add to notification center
+      addNotification({
+        type: 'issue',
+        title: 'Masalah baru dilaporkan',
+        message: `${data.issue.title} pada ${data.itemName}`,
+        itemName: data.itemName,
+        poNumber: data.poNumber,
+      }, eventId);
     } catch (err) {
       console.error('[Pusher] Handler error in issue-created:', err);
     }
-  }, [upsertIssue]);
+  }, [upsertIssue, addNotification]);
 
   // ─── ISSUE RESOLVED ───────────────────────────────────────────
   const handleIssueResolved = useCallback((rawData: unknown) => {
     try {
       const data = rawData as IssueEvent;
+      
+      // Deduplication: prevent double processing
+      const eventId = `issue-resolved-${data.issue.id}`;
+      if (!markEventProcessed(eventId)) {
+        return;
+      }
+      
       console.log('[Realtime] Issue resolved:', data);
       
       // Issue badge updates on that item card with full data
@@ -246,18 +174,31 @@ export function useRealtimeSync(currentUserId?: string) {
         resolver: data.issue.resolver,
         resolvedAt: data.issue.resolvedAt,
       });
-      
-      showToast('success', `✅ Issue Selesai: ${data.issue.title}`, 
-        `${data.itemName} · oleh ${data.actorName}`, 3000);
+
+      // Add to notification center
+      addNotification({
+        type: 'issue',
+        title: `Issue selesai: ${data.issue.title}`,
+        message: `${data.itemName} · oleh ${data.actorName}`,
+        itemName: data.itemName,
+        poNumber: data.poNumber,
+      }, eventId);
     } catch (err) {
       console.error('[Pusher] Handler error in issue-resolved:', err);
     }
-  }, [upsertIssue]);
+  }, [upsertIssue, addNotification]);
 
   // ─── ITEM DELIVERED ───────────────────────────────────────────
   const handleItemDelivered = useCallback((rawData: unknown) => {
     try {
       const data = rawData as ItemDeliveredEvent;
+      
+      // Deduplication: prevent double processing
+      const eventId = `delivered-${data.itemId}-${data.quantityDelivered}`;
+      if (!markEventProcessed(eventId)) {
+        return;
+      }
+      
       console.log('[Realtime] Item delivered:', data);
       
       // Delivery status updates on that item card
@@ -265,36 +206,61 @@ export function useRealtimeSync(currentUserId?: string) {
         quantity_delivered: data.quantityDelivered,
         is_delivered: data.isDelivered,
       });
-      
-      showToast('success', `📦 Terkirim: ${data.itemName}`, 
-        `${data.poNumber} · oleh ${data.actorName}`, 4000);
+
+      // Add to notification center
+      addNotification({
+        type: 'delivery',
+        title: 'Pengiriman dicatat',
+        message: `${data.itemName} dikirim`,
+        itemName: data.itemName,
+        poNumber: data.poNumber,
+      }, eventId);
     } catch (err) {
       console.error('[Pusher] Handler error in item-delivered:', err);
     }
-  }, [updateItem]);
+  }, [updateItem, addNotification]);
 
   // ─── PO CANCELLED / ARCHIVED ─────────────────────────────────
   const handlePOStatusChanged = useCallback((rawData: unknown) => {
     try {
       const data = rawData as POStatusChangedEvent;
+      
+      // Deduplication: prevent double processing
+      const eventId = `status-${data.poId}-${data.newStatus}`;
+      if (!markEventProcessed(eventId)) {
+        return;
+      }
+      
       console.log('[Realtime] PO status changed:', data);
       
       if (['cancelled', 'archived'].includes(data.newStatus)) {
         // Remove those item cards from Tasks page for everyone
         removeItemsByPoId(data.poId);
-        
-        showToast('info', `PO ${data.poNumber} ${data.newStatus}`, 
-          `oleh ${data.actorName}`, 4000);
+
+        // Add to notification center
+        addNotification({
+          type: 'system',
+          title: `PO ${data.poNumber} ${data.newStatus}`,
+          message: `oleh ${data.actorName}`,
+          poNumber: data.poNumber,
+        }, eventId);
       }
     } catch (err) {
       console.error('[Pusher] Handler error in po-status-changed:', err);
     }
-  }, [removeItemsByPoId]);
+  }, [removeItemsByPoId, addNotification]);
 
   // ─── PO URGENT TOGGLED ────────────────────────────────────────
   const handlePOUrgentChanged = useCallback((rawData: unknown) => {
     try {
       const data = rawData as POUrgentChangedEvent;
+      
+      // Deduplication: prevent double processing
+      const eventId = `urgent-${data.poId}`;
+      if (!markEventProcessed(eventId)) {
+        return;
+      }
+      
       console.log('[Realtime] PO urgent changed:', data);
       
       // Find all items belonging to this PO and update their po.is_urgent
@@ -308,18 +274,30 @@ export function useRealtimeSync(currentUserId?: string) {
         });
       
       if (data.isUrgent) {
-        showToast('warning', `🔴 URGENT: ${data.poNumber}`, 
-          `oleh ${data.actorName}`, 5000);
+        // Add to notification center
+        addNotification({
+          type: 'system',
+          title: `🔴 URGENT: ${data.poNumber}`,
+          message: `oleh ${data.actorName}`,
+          poNumber: data.poNumber,
+        }, eventId);
       }
     } catch (err) {
       console.error('[Pusher] Handler error in po-urgent-changed:', err);
     }
-  }, [updateItem]);
+  }, [updateItem, addNotification]);
 
   // ─── FINANCE UPDATED ──────────────────────────────────────────
   const handleFinanceUpdated = useCallback((rawData: unknown) => {
     try {
       const data = rawData as FinanceEvent;
+      
+      // Deduplication: prevent double processing
+      const eventId = `finance-${data.poNumber}-${data.action}`;
+      if (!markEventProcessed(eventId)) {
+        return;
+      }
+      
       console.log('[Realtime] Finance updated:', data);
       
       // Find all items belonging to this PO and update their po.is_paid
@@ -333,27 +311,33 @@ export function useRealtimeSync(currentUserId?: string) {
         });
       
       let title = '';
-      let description = '';
+      let message = '';
       
       if (data.action === 'paid') {
-        title = `${data.actorName} Payment-${data.poNumber}`;
-        description = 'Payment Received';
+        title = `Payment diterima: ${data.poNumber}`;
+        message = `${data.actorName} menandai PO sebagai dibayar`;
       } else if (data.action === 'invoiced') {
-        title = `${data.actorName} Invoice-${data.poNumber}`;
-        description = `Create Invoice : "${data.invoiceNumber || 'N/A'}"`;
+        title = `Invoice dibuat: ${data.poNumber}`;
+        message = `${data.actorName} membuat invoice ${data.invoiceNumber || 'N/A'}`;
       } else if (data.action === 'unpaid') {
-        title = `${data.actorName} Payment-${data.poNumber}`;
-        description = 'Payment Cancelled';
+        title = `Payment dibatalkan: ${data.poNumber}`;
+        message = `${data.actorName} membatalkan pembayaran`;
       } else if (data.action === 'uninvoiced') {
-        title = `${data.actorName} Invoice-${data.poNumber}`;
-        description = 'Invoice Cancelled';
+        title = `Invoice dibatalkan: ${data.poNumber}`;
+        message = `${data.actorName} membatalkan invoice`;
       }
-      
-      showToast('info', title, description, 4000);
+
+      // Add to notification center
+      addNotification({
+        type: 'system',
+        title,
+        message,
+        poNumber: data.poNumber,
+      }, eventId);
     } catch (err) {
       console.error('[Pusher] Handler error in finance-updated:', err);
     }
-  }, [updateItem]);
+  }, [updateItem, addNotification]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
