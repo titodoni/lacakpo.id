@@ -7,6 +7,7 @@ import { PushNotifications } from "@/components/push-notifications";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Providers } from "./providers";
 import { NavigationProgress } from "@/components/navigation-progress";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export const metadata: Metadata = {
   title: "lacakPO.id - Sistem Tracking PO",
@@ -35,9 +36,11 @@ export default function RootLayout({
         </Suspense>
         <Providers>
           <ThemeProvider>
-            <RealtimeProvider>
-              {children}
-            </RealtimeProvider>
+            <ErrorBoundary>
+              <RealtimeProvider>
+                {children}
+              </RealtimeProvider>
+            </ErrorBoundary>
           </ThemeProvider>
         </Providers>
         {/* Push notifications registration (only works when user is logged in) */}

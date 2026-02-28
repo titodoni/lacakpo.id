@@ -25,6 +25,10 @@ declare global {
         };
         unsubscribe: (channel: string) => void;
         disconnect: () => void;
+        connection: {
+          bind: (event: string, callback: (data: unknown) => void) => void;
+          unbind_all: () => void;
+        };
       };
     };
   }
@@ -164,159 +168,191 @@ export function useRealtimeSync(currentUserId?: string) {
 
   // ─── NEW PO CREATED ───────────────────────────────────────────
   const handlePOCreated = useCallback((rawData: unknown) => {
-    const data = rawData as POCreatedEvent;
-    console.log('[Realtime] PO created:', data);
-    
-    // Inject new item cards at top of everyone's Tasks page
-    addItems(data.items);
-    
-    showToast('success', `PO Baru: ${data.poNumber}`, 
-      `${data.clientName} · ${data.items.length} item · oleh ${data.actorName}`, 5000);
+    try {
+      const data = rawData as POCreatedEvent;
+      console.log('[Realtime] PO created:', data);
+      
+      // Inject new item cards at top of everyone's Tasks page
+      addItems(data.items);
+      
+      showToast('success', `PO Baru: ${data.poNumber}`, 
+        `${data.clientName} · ${data.items.length} item · oleh ${data.actorName}`, 5000);
+    } catch (err) {
+      console.error('[Pusher] Handler error in po-created:', err);
+    }
   }, [addItems]);
 
   // ─── TRACK PROGRESS UPDATED ───────────────────────────────────
   const handleTrackUpdated = useCallback((rawData: unknown) => {
-    const data = rawData as TrackUpdatedEvent;
-    
-    // Deduplication: create unique event ID
-    const eventId = `track-${data.itemId}-${data.trackDepartment}-${data.newProgress}-${Date.now()}`;
-    if (!markEventProcessed(eventId)) {
-      console.log('[Realtime] Duplicate track event ignored:', eventId);
-      return;
+    try {
+      const data = rawData as TrackUpdatedEvent;
+      
+      // Deduplication: create unique event ID
+      const eventId = `track-${data.itemId}-${data.trackDepartment}-${data.newProgress}-${Date.now()}`;
+      if (!markEventProcessed(eventId)) {
+        console.log('[Realtime] Duplicate track event ignored:', eventId);
+        return;
+      }
+      
+      console.log('[Realtime] Track updated:', data);
+      
+      // Only that one progress bar moves
+      updateTrack(data.itemId, data.trackDepartment, data.track);
+      
+      // Don't show toast to the person who made the update
+      if (data.actorId === currentUserId) return;
+      
+      const deptLabel: Record<string, string> = {
+        drafting: 'Draft', 
+        purchasing: 'Purch',
+        production: 'Prod', 
+        qc: 'QC', 
+        delivery: 'Delivery',
+      };
+      
+      showToast('info', `${data.actorName} · ${data.itemName}`, 
+        `${deptLabel[data.trackDepartment] || data.trackDepartment}: ${data.oldProgress}% → ${data.newProgress}%`, 3000);
+    } catch (err) {
+      console.error('[Pusher] Handler error in track-updated:', err);
     }
-    
-    console.log('[Realtime] Track updated:', data);
-    
-    // Only that one progress bar moves
-    updateTrack(data.itemId, data.trackDepartment, data.track);
-    
-    // Don't show toast to the person who made the update
-    if (data.actorId === currentUserId) return;
-    
-    const deptLabel: Record<string, string> = {
-      drafting: 'Draft', 
-      purchasing: 'Purch',
-      production: 'Prod', 
-      qc: 'QC', 
-      delivery: 'Delivery',
-    };
-    
-    showToast('info', `${data.actorName} · ${data.itemName}`, 
-      `${deptLabel[data.trackDepartment] || data.trackDepartment}: ${data.oldProgress}% → ${data.newProgress}%`, 3000);
   }, [currentUserId, updateTrack]);
 
   // ─── ISSUE CREATED ────────────────────────────────────────────
   const handleIssueCreated = useCallback((rawData: unknown) => {
-    const data = rawData as IssueEvent;
-    console.log('[Realtime] Issue created:', data);
-    
-    // Issue badge appears on that item card
-    upsertIssue(data.itemId, data.issue);
-    
-    showToast('warning', `⚠️ Issue Baru: ${data.issue.title}`, 
-      `${data.itemName} · ${data.poNumber} · oleh ${data.actorName}`, 5000);
+    try {
+      const data = rawData as IssueEvent;
+      console.log('[Realtime] Issue created:', data);
+      
+      // Issue badge appears on that item card
+      upsertIssue(data.itemId, data.issue);
+      
+      showToast('warning', `⚠️ Issue Baru: ${data.issue.title}`, 
+        `${data.itemName} · ${data.poNumber} · oleh ${data.actorName}`, 5000);
+    } catch (err) {
+      console.error('[Pusher] Handler error in issue-created:', err);
+    }
   }, [upsertIssue]);
 
   // ─── ISSUE RESOLVED ───────────────────────────────────────────
   const handleIssueResolved = useCallback((rawData: unknown) => {
-    const data = rawData as IssueEvent;
-    console.log('[Realtime] Issue resolved:', data);
-    
-    // Issue badge updates on that item card with full data
-    upsertIssue(data.itemId, { 
-      ...data.issue, 
-      status: 'resolved',
-      resolver: data.issue.resolver,
-      resolvedAt: data.issue.resolvedAt,
-    });
-    
-    showToast('success', `✅ Issue Selesai: ${data.issue.title}`, 
-      `${data.itemName} · oleh ${data.actorName}`, 3000);
+    try {
+      const data = rawData as IssueEvent;
+      console.log('[Realtime] Issue resolved:', data);
+      
+      // Issue badge updates on that item card with full data
+      upsertIssue(data.itemId, { 
+        ...data.issue, 
+        status: 'resolved',
+        resolver: data.issue.resolver,
+        resolvedAt: data.issue.resolvedAt,
+      });
+      
+      showToast('success', `✅ Issue Selesai: ${data.issue.title}`, 
+        `${data.itemName} · oleh ${data.actorName}`, 3000);
+    } catch (err) {
+      console.error('[Pusher] Handler error in issue-resolved:', err);
+    }
   }, [upsertIssue]);
 
   // ─── ITEM DELIVERED ───────────────────────────────────────────
   const handleItemDelivered = useCallback((rawData: unknown) => {
-    const data = rawData as ItemDeliveredEvent;
-    console.log('[Realtime] Item delivered:', data);
-    
-    // Delivery status updates on that item card
-    updateItem(data.itemId, {
-      quantity_delivered: data.quantityDelivered,
-      is_delivered: data.isDelivered,
-    });
-    
-    showToast('success', `📦 Terkirim: ${data.itemName}`, 
-      `${data.poNumber} · oleh ${data.actorName}`, 4000);
+    try {
+      const data = rawData as ItemDeliveredEvent;
+      console.log('[Realtime] Item delivered:', data);
+      
+      // Delivery status updates on that item card
+      updateItem(data.itemId, {
+        quantity_delivered: data.quantityDelivered,
+        is_delivered: data.isDelivered,
+      });
+      
+      showToast('success', `📦 Terkirim: ${data.itemName}`, 
+        `${data.poNumber} · oleh ${data.actorName}`, 4000);
+    } catch (err) {
+      console.error('[Pusher] Handler error in item-delivered:', err);
+    }
   }, [updateItem]);
 
   // ─── PO CANCELLED / ARCHIVED ─────────────────────────────────
   const handlePOStatusChanged = useCallback((rawData: unknown) => {
-    const data = rawData as POStatusChangedEvent;
-    console.log('[Realtime] PO status changed:', data);
-    
-    if (['cancelled', 'archived'].includes(data.newStatus)) {
-      // Remove those item cards from Tasks page for everyone
-      removeItemsByPoId(data.poId);
+    try {
+      const data = rawData as POStatusChangedEvent;
+      console.log('[Realtime] PO status changed:', data);
       
-      showToast('info', `PO ${data.poNumber} ${data.newStatus}`, 
-        `oleh ${data.actorName}`, 4000);
+      if (['cancelled', 'archived'].includes(data.newStatus)) {
+        // Remove those item cards from Tasks page for everyone
+        removeItemsByPoId(data.poId);
+        
+        showToast('info', `PO ${data.poNumber} ${data.newStatus}`, 
+          `oleh ${data.actorName}`, 4000);
+      }
+    } catch (err) {
+      console.error('[Pusher] Handler error in po-status-changed:', err);
     }
   }, [removeItemsByPoId]);
 
   // ─── PO URGENT TOGGLED ────────────────────────────────────────
   const handlePOUrgentChanged = useCallback((rawData: unknown) => {
-    const data = rawData as POUrgentChangedEvent;
-    console.log('[Realtime] PO urgent changed:', data);
-    
-    // Find all items belonging to this PO and update their po.is_urgent
-    const { items } = useItemsStore.getState();
-    Object.values(items)
-      .filter(item => item.po_id === data.poId)
-      .forEach(item => {
-        updateItem(item.id, {
-          po: { ...item.po, is_urgent: data.isUrgent }
+    try {
+      const data = rawData as POUrgentChangedEvent;
+      console.log('[Realtime] PO urgent changed:', data);
+      
+      // Find all items belonging to this PO and update their po.is_urgent
+      const { items } = useItemsStore.getState();
+      Object.values(items)
+        .filter(item => item.po_id === data.poId)
+        .forEach(item => {
+          updateItem(item.id, {
+            po: { ...item.po, is_urgent: data.isUrgent }
+          });
         });
-      });
-    
-    if (data.isUrgent) {
-      showToast('warning', `🔴 URGENT: ${data.poNumber}`, 
-        `oleh ${data.actorName}`, 5000);
+      
+      if (data.isUrgent) {
+        showToast('warning', `🔴 URGENT: ${data.poNumber}`, 
+          `oleh ${data.actorName}`, 5000);
+      }
+    } catch (err) {
+      console.error('[Pusher] Handler error in po-urgent-changed:', err);
     }
   }, [updateItem]);
 
   // ─── FINANCE UPDATED ──────────────────────────────────────────
   const handleFinanceUpdated = useCallback((rawData: unknown) => {
-    const data = rawData as FinanceEvent;
-    console.log('[Realtime] Finance updated:', data);
-    
-    // Find all items belonging to this PO and update their po.is_paid
-    const { items } = useItemsStore.getState();
-    Object.values(items)
-      .filter(item => item.po.po_number === data.poNumber)
-      .forEach(item => {
-        updateItem(item.id, {
-          po: { ...item.po, is_paid: data.isPaid }
+    try {
+      const data = rawData as FinanceEvent;
+      console.log('[Realtime] Finance updated:', data);
+      
+      // Find all items belonging to this PO and update their po.is_paid
+      const { items } = useItemsStore.getState();
+      Object.values(items)
+        .filter(item => item.po.po_number === data.poNumber)
+        .forEach(item => {
+          updateItem(item.id, {
+            po: { ...item.po, is_paid: data.isPaid }
+          });
         });
-      });
-    
-    let title = '';
-    let description = '';
-    
-    if (data.action === 'paid') {
-      title = `${data.actorName} Payment-${data.poNumber}`;
-      description = 'Payment Received';
-    } else if (data.action === 'invoiced') {
-      title = `${data.actorName} Invoice-${data.poNumber}`;
-      description = `Create Invoice : "${data.invoiceNumber || 'N/A'}"`;
-    } else if (data.action === 'unpaid') {
-      title = `${data.actorName} Payment-${data.poNumber}`;
-      description = 'Payment Cancelled';
-    } else if (data.action === 'uninvoiced') {
-      title = `${data.actorName} Invoice-${data.poNumber}`;
-      description = 'Invoice Cancelled';
+      
+      let title = '';
+      let description = '';
+      
+      if (data.action === 'paid') {
+        title = `${data.actorName} Payment-${data.poNumber}`;
+        description = 'Payment Received';
+      } else if (data.action === 'invoiced') {
+        title = `${data.actorName} Invoice-${data.poNumber}`;
+        description = `Create Invoice : "${data.invoiceNumber || 'N/A'}"`;
+      } else if (data.action === 'unpaid') {
+        title = `${data.actorName} Payment-${data.poNumber}`;
+        description = 'Payment Cancelled';
+      } else if (data.action === 'uninvoiced') {
+        title = `${data.actorName} Invoice-${data.poNumber}`;
+        description = 'Invoice Cancelled';
+      }
+      
+      showToast('info', title, description, 4000);
+    } catch (err) {
+      console.error('[Pusher] Handler error in finance-updated:', err);
     }
-    
-    showToast('info', title, description, 4000);
   }, [updateItem]);
 
   useEffect(() => {
@@ -348,11 +384,37 @@ export function useRealtimeSync(currentUserId?: string) {
       };
       unsubscribe: (channel: string) => void;
       disconnect: () => void;
+      connection: {
+        bind: (event: string, callback: (data: unknown) => void) => void;
+        unbind_all: () => void;
+      };
     })(pusherKey, {
       cluster: pusherCluster,
     });
 
+    // Connection state handlers
+    pusher.connection.bind('connected', () => {
+      console.log('[Pusher] Connected');
+    });
+
+    pusher.connection.bind('disconnected', () => {
+      console.log('[Pusher] Disconnected');
+    });
+
+    pusher.connection.bind('failed', () => {
+      console.error('[Pusher] Connection failed');
+    });
+
+    pusher.connection.bind('error', (err: unknown) => {
+      console.error('[Pusher] Connection error:', err);
+    });
+
     const channel = pusher.subscribe('po-channel');
+
+    // Subscription error handler
+    channel.bind('pusher:subscription_error', (err: unknown) => {
+      console.error('[Pusher] Subscription error:', err);
+    });
 
     // Bind all event handlers
     channel.bind('po-created', handlePOCreated as (data: unknown) => void);
@@ -367,6 +429,7 @@ export function useRealtimeSync(currentUserId?: string) {
     console.log('✅ Real-time sync connected to channel: po-channel');
 
     return () => {
+      pusher.connection.unbind_all();
       channel.unbind_all();
       pusher.unsubscribe('po-channel');
       pusher.disconnect();

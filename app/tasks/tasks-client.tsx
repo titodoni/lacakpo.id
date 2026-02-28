@@ -130,30 +130,34 @@ export function TasksClient({ initialItems, currentUserId }: TasksClientProps) {
   const items = useMemo(() => {
     return orderedIds
       .map(id => storeItems[id])
-      .filter(Boolean)
-      .map(item => ({
-        ...item,
-        itemName: item.item_name,
-        quantityTotal: item.quantity_total,
-        quantityDelivered: item.quantity_delivered,
-        quantityUnit: item.quantity_unit,
-        purchaseOrder: {
-          id: item.po.id,
-          poNumber: item.po.po_number,
-          client: item.po.client,
-          deliveryDeadline: item.po.delivery_deadline,
-          poDate: item.po.po_date || new Date().toISOString(),
-          isUrgent: item.po.is_urgent,
-          isVendorJob: item.po.is_vendor_job,
-          isPaid: item.po.is_paid || false,
-        },
-        tracks: item.tracks.map(t => ({
-          ...t,
-          updatedBy: t.updated_by,
-          updatedAt: t.updated_at,
-          lastNote: t.last_note,
-        })),
-      })) as unknown as ItemCardItem[];
+      .filter((item): item is Item => item !== undefined && item !== null)
+      .map(item => {
+        if (!item?.id) return null;
+        return {
+          ...item,
+          itemName: item.item_name,
+          quantityTotal: item.quantity_total,
+          quantityDelivered: item.quantity_delivered,
+          quantityUnit: item.quantity_unit,
+          purchaseOrder: {
+            id: item.po.id,
+            poNumber: item.po.po_number,
+            client: item.po.client,
+            deliveryDeadline: item.po.delivery_deadline,
+            poDate: item.po.po_date || new Date().toISOString(),
+            isUrgent: item.po.is_urgent,
+            isVendorJob: item.po.is_vendor_job,
+            isPaid: item.po.is_paid || false,
+          },
+          tracks: item.tracks.map(t => ({
+            ...t,
+            updatedBy: t.updated_by,
+            updatedAt: t.updated_at,
+            lastNote: t.last_note,
+          })),
+        };
+      })
+      .filter(Boolean) as unknown as ItemCardItem[];
   }, [storeItems, orderedIds]);
 
   const departmentFilteredItems = useMemo(() => {
