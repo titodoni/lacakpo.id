@@ -89,7 +89,22 @@ export function TasksClient({ initialItems, currentUserId }: TasksClientProps) {
       const res = await fetch('/api/items');
       if (!res.ok) throw new Error('Failed to fetch items');
       const data = await res.json();
-      return data.items as Item[];
+      return data.items.map((item: any) => ({
+        ...item,
+        po: {
+          id: item.purchaseOrder.id,
+          po_number: item.purchaseOrder.poNumber,
+          client_po_number: item.purchaseOrder.clientPoNumber ?? null,
+          po_date: item.purchaseOrder.poDate ?? null,
+          delivery_deadline: item.purchaseOrder.deliveryDeadline ?? null,
+          is_urgent: item.purchaseOrder.isUrgent ?? false,
+          is_vendor_job: item.purchaseOrder.isVendorJob ?? false,
+          is_paid: item.purchaseOrder.isPaid ?? false,
+          status: item.purchaseOrder.status,
+          client: item.purchaseOrder.client,
+        },
+        purchaseOrder: undefined,
+      })) as Item[];
     },
     initialData: initialItems,
     staleTime: 30 * 1000, // 30 seconds
@@ -133,10 +148,7 @@ export function TasksClient({ initialItems, currentUserId }: TasksClientProps) {
       .filter((item): item is Item => item !== undefined && item !== null)
       .filter((item) => {
         // Additional safety: ensure required nested objects exist
-        if (!item.id || !item.po || !item.tracks) {
-          console.warn('[tasks-client] Skipping invalid item:', item);
-          return false;
-        }
+        if (!item.id || !item.po || !item.tracks) return false;
         return true;
       })
       .map(item => {
