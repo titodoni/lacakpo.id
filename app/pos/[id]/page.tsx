@@ -305,7 +305,7 @@ export default function PODetailPage() {
 
   return (
     <DashboardLayout user={userData}>
-      <div className="space-y-6 max-w-4xl mx-auto">
+      <div className="space-y-3 max-w-4xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Link
@@ -319,136 +319,109 @@ export default function PODetailPage() {
 
         {/* PO Info */}
         <div className={cn(
-          'bg-card rounded-2xl p-6 border',
+          'bg-card rounded-2xl p-3 border',
           po.isUrgent ? 'border-destructive' : 'border-border'
         )}>
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="text-2xl font-bold text-foreground">{po.poNumber}</h1>
-                {po.isUrgent && (
-                  <span className="px-3 py-1 text-xs font-bold rounded-full bg-destructive/10 text-destructive">
-                    URGENT
-                  </span>
-                )}
-                {po.isVendorJob && (
-                  <span className="px-3 py-1 text-xs font-bold rounded-full bg-blue-100 text-blue-700">
-                    VENDOR: {po.vendorName}
-                  </span>
-                )}
-                <span className={cn(
-                  'px-3 py-1 text-xs font-medium rounded-full',
-                  po.status === 'active' ? 'bg-emerald-100 text-emerald-700' :
-                  po.status === 'completed' ? 'bg-muted text-muted-foreground' :
-                  'bg-destructive/10 text-destructive'
-                )}>
-                  {po.status}
-                </span>
-              </div>
-              <p className="text-muted-foreground mt-1">{po.client.name}</p>
-              {po.clientPoNumber && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  PO Klien: {po.clientPoNumber}
-                </p>
-              )}
-              {po.isVendorJob && (
-                <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <p className="text-sm font-medium text-blue-900">Informasi Vendor</p>
-                  <p className="text-sm text-blue-800">Nama: {po.vendorName}</p>
-                  {po.vendorPhone && <p className="text-sm text-blue-800">Telp: {po.vendorPhone}</p>}
-                  {po.vendorEstimation && (
-                    <p className="text-sm text-blue-800">
-                      Estimasi Selesai: {new Date(po.vendorEstimation).toLocaleDateString('id-ID')}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="text-right">
-              <div className="text-sm text-muted-foreground">
-                <p>Tanggal PO: {new Date(po.poDate).toLocaleDateString('id-ID')}</p>
-                {po.deliveryDeadline && (
-                  <p className={cn('mt-1', 
-                    new Date(po.deliveryDeadline) < new Date() ? 'text-destructive font-semibold' : 'text-amber-600'
-                  )}>
-                    Jatuh tempo: {new Date(po.deliveryDeadline).toLocaleDateString('id-ID')}
-                  </p>
-                )}
-              </div>
-              
+          {/* Row 1: PO Number, Status, Actions */}
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 flex-wrap min-w-0">
+              <h1 className="text-lg font-bold text-foreground truncate">{po.poNumber}</h1>
+              <span className={cn(
+                'px-2 py-0.5 text-xs font-medium rounded-full shrink-0',
+                po.status === 'active' ? 'bg-emerald-100 text-emerald-700' :
+                po.status === 'completed' ? 'bg-muted text-muted-foreground' :
+                'bg-destructive/10 text-destructive'
+              )}>
+                {po.status}
+              </span>
               {isAdmin && (
-                <div className="flex items-center justify-end gap-2 mt-3">
+                <div className="flex items-center gap-1">
                   <Link
                     href={`/pos/${po.id}/edit`}
                     prefetch={true}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-foreground bg-muted hover:bg-muted/80 rounded-lg transition-colors"
+                    className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-foreground bg-muted hover:bg-muted/80 rounded transition-colors"
                   >
-                    <Pencil className="w-4 h-4" />
+                    <Pencil className="w-3 h-3" />
                     Edit
                   </Link>
                   <button
                     onClick={handleDeletePO}
                     disabled={isDeleting}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-destructive bg-destructive/10 hover:bg-destructive/20 rounded-lg transition-colors disabled:opacity-50"
+                    className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-destructive bg-destructive/10 hover:bg-destructive/20 rounded transition-colors disabled:opacity-50"
                   >
-                    <Trash2 className="w-4 h-4" />
-                    {isDeleting ? 'Menghapus...' : 'Hapus'}
+                    <Trash2 className="w-3 h-3" />
+                    {isDeleting ? '...' : 'Hapus'}
                   </button>
                 </div>
               )}
             </div>
           </div>
+
+          {/* Row 2: Client, PO Klien, Dates */}
+          <div className="mt-2 text-sm text-muted-foreground truncate">
+            <span className="font-medium text-foreground">{po.client.name}</span>
+            {po.clientPoNumber && (
+              <span> · PO Klien: {po.clientPoNumber}</span>
+            )}
+            <span> · {new Date(po.poDate).toLocaleDateString('id-ID')}</span>
+            {po.deliveryDeadline && (
+              <span className={cn(
+                new Date(po.deliveryDeadline) < new Date() ? 'text-destructive font-medium' : 'text-amber-600'
+              )}>
+                {' · '}Jatuh tempo: {new Date(po.deliveryDeadline).toLocaleDateString('id-ID')}
+              </span>
+            )}
+            {po.isVendorJob && po.vendorName && (
+              <span className="text-blue-600"> · Vendor: {po.vendorName}</span>
+            )}
+          </div>
+
+          {/* Vendor extra info */}
+          {po.isVendorJob && (po.vendorPhone || po.vendorEstimation) && (
+            <div className="mt-1 text-xs text-blue-600">
+              {po.vendorPhone && <span>Telp: {po.vendorPhone}</span>}
+              {po.vendorPhone && po.vendorEstimation && <span> · </span>}
+              {po.vendorEstimation && (
+                <span>Estimasi: {new Date(po.vendorEstimation)
+                  .toLocaleDateString('id-ID')}</span>
+              )}
+            </div>
+          )}
+
           {po.notes && (
-            <p className="mt-4 text-sm text-muted-foreground bg-muted p-3 rounded-xl">
+            <p className="mt-2 text-sm text-muted-foreground bg-muted p-2 rounded-lg">
               {po.notes}
             </p>
           )}
         </div>
 
         {/* Finance Section */}
-        <div className="bg-card rounded-2xl p-6 border border-border">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-              <DollarSign className="w-5 h-5" />
-              Status Keuangan
-            </h2>
-            {po.status === 'finished' && (
-              <span className="px-3 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-700 flex items-center gap-1">
-                <CheckCircle2 className="w-3 h-3" />
-                FINISHED
-              </span>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-card rounded-2xl p-3 border border-border">
+          <div className="grid grid-cols-2 gap-2">
             {/* Invoice Status */}
             <div className={cn(
-              'p-4 rounded-xl border',
+              'p-2 rounded-lg border flex items-center gap-2',
               po.isInvoiced ? 'bg-amber-50 border-amber-200' : 'bg-card border-border'
             )}>
-              <div className="flex items-center gap-3">
-                <div className={cn('p-2 rounded-lg', po.isInvoiced ? 'bg-emerald-100' : 'bg-muted')}>
-                  <FileText className={cn('w-5 h-5', po.isInvoiced ? 'text-emerald-600' : 'text-muted-foreground')} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">
-                    {po.isInvoiced ? 'Invoice dikirim' : 'Belum Di-invoice'}
-                  </p>
-                  {po.isInvoiced && po.invoiceNumber && (
-                    <p className="text-xs text-muted-foreground">No: {po.invoiceNumber}</p>
-                  )}
-                </div>
+              <FileText className={cn('w-4 h-4 shrink-0', po.isInvoiced ? 'text-emerald-600' : 'text-muted-foreground')} />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-foreground truncate">
+                  {po.isInvoiced ? 'Sudah Invoice' : 'Belum Invoice'}
+                </p>
+                {po.isInvoiced && po.invoiceNumber && (
+                  <p className="text-[10px] text-muted-foreground truncate">{po.invoiceNumber}</p>
+                )}
               </div>
-              
+
               {isFinance && !po.isInvoiced && (
-                <div className="mt-3">
+                <div className="mt-1">
                   {!showFinanceForm ? (
                     <button
                       onClick={() => setShowFinanceForm(true)}
                       disabled={isUpdatingFinance}
-                      className="w-full py-2 text-sm font-medium text-emerald-700 bg-emerald-100 hover:bg-emerald-200 rounded-lg transition-colors"
+                      className="w-full py-1.5 text-xs font-medium text-emerald-700 bg-emerald-100 hover:bg-emerald-200 rounded transition-colors"
                     >
-                      Tandai Invoiced
+                      Tandai
                     </button>
                   ) : (
                     <div className="space-y-2">
@@ -457,19 +430,19 @@ export default function PODetailPage() {
                         value={invoiceNumber}
                         onChange={(e) => setInvoiceNumber(e.target.value)}
                         placeholder="Nomor Invoice (opsional)"
-                        className="w-full px-3 py-2 text-sm border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background"
+                        className="w-full px-2 py-1 text-xs border border-border rounded focus:outline-none focus:ring-1 focus:ring-primary bg-background"
                       />
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleFinanceUpdate('invoice')}
                           disabled={isUpdatingFinance}
-                          className="flex-1 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary-hover rounded-lg transition-colors disabled:opacity-50"
+                          className="flex-1 py-1 text-xs font-medium text-primary-foreground bg-primary hover:bg-primary-hover rounded transition-colors disabled:opacity-50"
                         >
-                          {isUpdatingFinance ? 'Menyimpan...' : 'Simpan'}
+                          {isUpdatingFinance ? '...' : 'Simpan'}
                         </button>
                         <button
                           onClick={() => { setShowFinanceForm(false); setInvoiceNumber(''); }}
-                          className="px-3 py-2 text-sm font-medium text-foreground bg-muted hover:bg-muted/80 rounded-lg transition-colors"
+                          className="px-2 py-1 text-xs font-medium text-foreground bg-muted hover:bg-muted/80 rounded transition-colors"
                         >
                           Batal
                         </button>
@@ -482,43 +455,39 @@ export default function PODetailPage() {
 
             {/* Payment Status */}
             <div className={cn(
-              'p-4 rounded-xl border',
+              'p-2 rounded-lg border flex items-center gap-2',
               po.isPaid ? 'bg-amber-50 border-amber-200' : 'bg-card border-border'
             )}>
-              <div className="flex items-center gap-3">
-                <div className={cn('p-2 rounded-lg', po.isPaid ? 'bg-emerald-100' : 'bg-muted')}>
-                  <CreditCard className={cn('w-5 h-5', po.isPaid ? 'text-emerald-600' : 'text-muted-foreground')} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">
-                    {po.isPaid ? 'Sudah Dibayar' : 'Belum Dibayar'}
-                  </p>
-                </div>
+              <CreditCard className={cn('w-4 h-4 shrink-0', po.isPaid ? 'text-emerald-600' : 'text-muted-foreground')} />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-foreground truncate">
+                  {po.isPaid ? 'Sudah Dibayar' : 'Belum Dibayar'}
+                </p>
               </div>
-              
+
               {isFinance && (
                 <button
                   onClick={() => handleFinanceUpdate('payment')}
                   disabled={isUpdatingFinance || (!po.isPaid && !allItemsDelivered)}
-                  className="w-full mt-3 py-2 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary-hover rounded-lg transition-colors disabled:opacity-50 disabled:bg-muted"
+                  className="w-full mt-1 py-1.5 text-xs font-medium text-primary-foreground bg-primary hover:bg-primary-hover rounded transition-colors disabled:opacity-50 disabled:bg-muted"
                 >
                   {isUpdatingFinance 
-                    ? 'Menyimpan...' 
+                    ? '...' 
                     : po.isPaid 
-                      ? 'Batalkan Pembayaran' 
-                      : 'Tandai Dibayar'
+                      ? 'Batal' 
+                      : 'Tandai'
                   }
                 </button>
               )}
             </div>
           </div>
 
-          {po.status === 'finished' && po.finishedAt && (
-            <div className="mt-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200">
-              <p className="text-sm text-emerald-800 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4" />
-                <span className="font-medium">Project Finished</span>
-                <span className="text-emerald-600">
+          {(po.status === 'finished' || po.finishedAt) && (
+            <div className="mt-2 p-2 rounded-lg bg-emerald-50 border border-emerald-200">
+              <p className="text-xs text-emerald-800 flex items-center gap-1.5">
+                <CheckCircle2 className="w-3 h-3" />
+                <span className="font-medium">Finished</span>
+                <span className="text-emerald-600 text-[10px]">
                   pada {new Date(po.finishedAt).toLocaleDateString('id-ID')}
                 </span>
               </p>
@@ -527,12 +496,12 @@ export default function PODetailPage() {
         </div>
 
         {/* Items */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           <h2 className="text-lg font-semibold text-foreground">
             Item ({po.items.length})
           </h2>
           
-          <div className="space-y-3">
+          <div className="space-y-2">
             {itemsWithIssues.map((item) => (
               <div key={item.id}>
                 <ItemCard
